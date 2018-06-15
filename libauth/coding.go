@@ -1,5 +1,9 @@
 package libauth
 
+import (
+	"bytes"
+)
+
 const base64N = "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA"
 
 func QuirkBase64Encode(t string) string {
@@ -35,4 +39,73 @@ func QuirkBase64Encode(t string) string {
 		}
 	}
 	return string(u[:len])
+}
+
+func XEncode(str, key string) *string {
+
+	S := func(a string, b bool) []uint32 {
+		c := len(a)
+		v := make([]uint32, (c+3)/4)
+		for i := 0; i < c; i += 4 {
+			t := uint32(0)
+			for j := 0; j+i < c && j < 4; j++ {
+				t |= uint32(a[j+i]) << (uint32(j) * 8)
+			}
+			v[i>>2] = t
+		}
+		if b {
+			v = append(v, uint32(c))
+		}
+		return v
+	}
+	L := func(a []uint32, b bool) *string {
+		d := len(a)
+		c := (d - 1) << 2
+		if b {
+			m := int(a[d-1])
+			if (m < c-3) || (m > c) {
+				return nil
+			}
+			c = m
+		}
+		var buffer bytes.Buffer
+		for i := 0; i < d; i++ {
+			buffer.Write([]byte{byte(a[i] & 0xff), byte(a[i] >> 8 & 0xff), byte(a[i] >> 16 & 0xff), byte(a[i] >> 24 & 0xff)})
+		}
+		var s string
+		if b {
+			s = buffer.String()[:c]
+		} else {
+			s = buffer.String()
+		}
+		return &s
+	}
+
+	if len(str) == 0 {
+		empty := ""
+		return &empty
+	}
+	v := S(str, true)
+	k := S(key, false)
+	n := len(v) - 1
+	z := v[n]
+	y := v[0]
+	d := uint32(0)
+	for q := 6 + 52/(n+1); q > 0; q-- {
+		d += 0x9E3779B9
+		e := (d >> 2) & 3
+		for p := 0; p <= n; p++ {
+			if p == n {
+				y = v[0]
+			} else {
+				y = v[p+1]
+			}
+			m := (z >> 5) ^ (y << 2)
+			m += (y >> 3) ^ (z << 4) ^ (d ^ y)
+			m += k[(p&3)^int(e)] ^ z
+			v[p] += m
+			z = v[p]
+		}
+	}
+	return L(v, false)
 }

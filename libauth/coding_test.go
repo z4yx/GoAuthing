@@ -20,3 +20,12 @@ func TestQuirkBase64Encode(t *testing.T) {
 		So(QuirkBase64Encode("\x01aAbB_+=-\x11"), ShouldEqual, "LaiVZYRs8ztfP+==")
 	})
 }
+func TestXEncode(t *testing.T) {
+	Convey("XEncode should work", t, func() {
+		So(QuirkBase64Encode(*XEncode("", "aa0edd0fff7dd9f1f0ae4e981ec0114c7b0bf6f67c4895bed4f4ac634e97ecf2")), ShouldEqual, "")
+		So(QuirkBase64Encode(*XEncode("1", "aa0edd0fff7dd9f1f0ae4e981ec0114c7b0bf6f67c4895bed4f4ac634e97ecf2")), ShouldEqual, "NmsaR0fCm5H=")
+		So(QuirkBase64Encode(*XEncode("agfawegwq12834eqrge", "aa0edd0fff7dd9f1f0ae4e981ec0114c7b0bf6f67c4895bed4f4ac634e97ecf2")), ShouldEqual, "DAxHygvRUjlDyJjmvChIzuavMsjy7B9L")
+		So(QuirkBase64Encode(*XEncode("agfawegwq12834eqrge", "0000000000000000000000000000000000000000000000000000000000000000")), ShouldEqual, "TOdQ9ggF2y/mskS6Orkg+eUZIok9vqJr")
+		So(QuirkBase64Encode(*XEncode("9$02%8r89)(&22{}we[f]|s", "aa0edd0fff7dd9f1f0ae4e981ec0114c7b0bf6f67c4895bed4f4ac634e97ecf2")), ShouldEqual, "kCG+xmvGAhCV717Y80Fk0o1YJ8SYvBdnUmQoqS==")
+	})
+}
