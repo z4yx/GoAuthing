@@ -2,9 +2,25 @@ package libauth
 
 import (
 	"bytes"
+	"crypto/md5"
+	"crypto/sha1"
+	"fmt"
+	"io"
 )
 
 const base64N = "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA"
+
+func sha1sum(input string) string {
+	h := sha1.New()
+	io.WriteString(h, input)
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func md5sum(input string) string {
+	h := md5.New()
+	io.WriteString(h, input)
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
 
 func QuirkBase64Encode(t string) string {
 	a := len(t)
