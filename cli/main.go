@@ -15,10 +15,24 @@ import (
 var logger = loggo.GetLogger("")
 
 func cmdAction(c *cli.Context) error {
+	proto := 4
+	if c.Bool("help") {
+		cli.ShowAppHelpAndExit(c, 0)
+	}
 	if c.Bool("debug") {
 		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
 	} else {
 		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
+	}
+	if c.Bool("ipv6") {
+		proto = 6
+	}
+	if !c.Bool("no-check") {
+		online, _ := libauth.IsOnline(proto)
+		if online {
+			fmt.Println("Currently online!")
+			return nil
+		}
 	}
 	username := c.String("username")
 	if len(username) == 0 {
@@ -40,7 +54,7 @@ func cmdAction(c *cli.Context) error {
 	if len(username) == 0 || len(password) == 0 {
 		return cli.NewExitError("username or password can't be empty", 1)
 	}
-	success, err := libauth.Login(username, password, 4)
+	success, err := libauth.Login(username, password, proto)
 	if success {
 		fmt.Printf("Login Successfully!\n")
 	} else {
@@ -55,9 +69,13 @@ func main() {
 		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn",
 		Version:   "0.1",
+		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
+			&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
+			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6)"},
+			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 		},
 		Action:  cmdAction,

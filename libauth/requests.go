@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/juju/loggo"
 )
 
 const LogUriBase = "https://auth%d.tsinghua.edu.cn/cgi-bin/srun_portal"
+const OnlineCheckUriBase = "https://auth%d.tsinghua.edu.cn/srun_portal_pc.php"
 const UsageUriBase = "https://auth%d.tsinghua.edu.cn/rad_user_info.php"
 const ChallengeUriBase = "https://auth%d.tsinghua.edu.cn/cgi-bin/get_challenge"
 
@@ -94,6 +96,32 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 		return "", err
 	}
 	return extractJSONFromJSONP(string(body), CB)
+}
+
+func IsOnline(proto int) (online bool, err error) {
+	var netClient = &http.Client{
+		Timeout: time.Second * 2,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
+			if strings.Index(req.URL.Path, "succeed_wired.php") != -1 {
+				online = true
+			}
+			return nil
+		},
+	}
+	online = false
+	params := url.Values{
+		"ac_id": []string{"1"},
+	}
+	url := fmt.Sprintf(OnlineCheckUriBase, proto) + "?" + params.Encode()
+	logger.Debugf("GET \"%s\"\n", url)
+	resp, err := netClient.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	return
 }
 
 func Login(username, password string, proto int) (success bool, err error) {
