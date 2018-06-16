@@ -42,11 +42,16 @@ func buildChallengeParams(username string) url.Values {
 	return challParams
 }
 
-func buildLoginParams(username, password, token string) (loginParams url.Values, err error) {
+func buildLoginParams(username, password, token string, logout bool) (loginParams url.Values, err error) {
 	ip := ""
 	acID := "1"
 	//Don't care
 	hmd5 := "00000000000000000000000000000000" //md5sum(password)
+
+	action := "login"
+	if logout {
+		action = "logout"
+	}
 	rawInfo := map[string]string{
 		"username": username,
 		"password": password,
@@ -57,7 +62,7 @@ func buildLoginParams(username, password, token string) (loginParams url.Values,
 	infoJSON, _ := json.Marshal(rawInfo)
 	// fmt.Printf("infoJSON: %s\n", infoJSON)
 	loginParams = url.Values{
-		"action":       []string{"login"},
+		"action":       []string{action},
 		"ac_id":        []string{acID},
 		"n":            []string{"200"},
 		"type":         []string{"1"},
@@ -72,7 +77,7 @@ func buildLoginParams(username, password, token string) (loginParams url.Values,
 		return
 	}
 	loginParams.Add("info", "{SRBX1}"+QuirkBase64Encode(*encoded))
-	// fmt.Printf("chksum(raw): %v\n", token+username+token+hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info"))
+	// fmt.Printf("chksum(raw): %v\n", token+username+token + hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info"))
 	loginParams.Add("chksum", sha1sum(token+username+token+hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info")))
 	// fmt.Printf("loginParams: %v\n", loginParams)
 	return
@@ -124,7 +129,7 @@ func IsOnline(proto int) (online bool, err error) {
 	return
 }
 
-func Login(username, password string, proto int) (success bool, err error) {
+func LoginLogout(username, password string, proto int, logout bool) (success bool, err error) {
 	success = false
 	logger.Debugf("Getting challenge...\n")
 	body, err := GetJSON(fmt.Sprintf(ChallengeUriBase, proto), buildChallengeParams(username))
@@ -149,7 +154,7 @@ func Login(username, password string, proto int) (success bool, err error) {
 		return
 	}
 
-	loginParams, err := buildLoginParams(username, password, token)
+	loginParams, err := buildLoginParams(username, password, token, logout)
 	if err != nil {
 		return
 	}

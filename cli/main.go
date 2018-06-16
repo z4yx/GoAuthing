@@ -16,6 +16,7 @@ var logger = loggo.GetLogger("")
 
 func cmdAction(c *cli.Context) error {
 	proto := 4
+	logout := c.Bool("logout")
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
@@ -29,11 +30,15 @@ func cmdAction(c *cli.Context) error {
 	}
 	if !c.Bool("no-check") {
 		online, _ := libauth.IsOnline(proto)
-		if online {
+		if online && !logout {
 			fmt.Println("Currently online!")
+			return nil
+		} else if !online && logout {
+			fmt.Println("Currently offline!")
 			return nil
 		}
 	}
+
 	username := c.String("username")
 	if len(username) == 0 {
 		reader := bufio.NewReader(os.Stdin)
@@ -41,8 +46,12 @@ func cmdAction(c *cli.Context) error {
 		username, _ = reader.ReadString('\n')
 		username = strings.TrimSpace(username)
 	}
+	if len(username) == 0 {
+		return cli.NewExitError("username can't be empty", 1)
+	}
+
 	password := c.String("password")
-	if len(password) == 0 {
+	if !logout && len(password) == 0 {
 		fmt.Printf("Password: ")
 		b, err := gopass.GetPasswdMasked()
 		if err != nil {
@@ -51,14 +60,19 @@ func cmdAction(c *cli.Context) error {
 		}
 		password = string(b)
 	}
-	if len(username) == 0 || len(password) == 0 {
-		return cli.NewExitError("username or password can't be empty", 1)
+	if !logout && len(password) == 0 {
+		return cli.NewExitError("password can't be empty", 1)
 	}
-	success, err := libauth.Login(username, password, proto)
+
+	success, err := libauth.LoginLogout(username, password, proto, logout)
+	action := "Login"
+	if logout {
+		action = "Logout"
+	}
 	if success {
-		fmt.Printf("Login Successfully!\n")
+		fmt.Printf("%s Successfully!\n", action)
 	} else {
-		fmt.Printf("Login Failed: %s\n", err.Error())
+		fmt.Printf("%s Failed: %s\n", action, err.Error())
 	}
 	return nil
 }
@@ -74,6 +88,7 @@ func main() {
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
+			&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
 			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6)"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
