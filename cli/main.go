@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
 	"github.com/z4yx/GoAuthing/libauth"
-	cli "gopkg.in/urfave/cli.v2"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 var logger = loggo.GetLogger("")
@@ -18,7 +21,25 @@ func cmdAction(c *cli.Context) error {
 		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
 	}
 	username := c.String("username")
+	if len(username) == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Username: ")
+		username, _ = reader.ReadString('\n')
+		username = strings.TrimSpace(username)
+	}
 	password := c.String("password")
+	if len(password) == 0 {
+		fmt.Printf("Password: ")
+		b, err := gopass.GetPasswdMasked()
+		if err != nil {
+			// Handle gopass.ErrInterrupted or getch() read error
+			return nil
+		}
+		password = string(b)
+	}
+	if len(username) == 0 || len(password) == 0 {
+		return cli.NewExitError("username or password can't be empty", 1)
+	}
 	success, err := libauth.Login(username, password, 4)
 	if success {
 		fmt.Printf("Login Successfully!\n")
@@ -35,12 +56,12 @@ func main() {
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn",
 		Version:   "0.1",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "username", Aliases: []string{"u"}, Usage: "your TUNET account name"},
-			&cli.StringFlag{Name: "password", Aliases: []string{"p"}, Usage: "your TUNET password"},
+			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
+			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 		},
 		Action:  cmdAction,
-		Authors: []*cli.Author{{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"}},
+		Authors: []cli.Author{{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"}},
 	}
 
 	app.Run(os.Args)
