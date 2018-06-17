@@ -14,6 +14,7 @@ script:
 - GOARCH=arm GOOS=linux go build -o auth-thu.linux.arm github.com/z4yx/GoAuthing/cli
 deploy:
   provider: releases
+  skip_cleanup: true
   api_key:
     secure: UI5By8hFIhoxPLhkJFksG2Oa6ALrHY6kE3puL9bL1lx4UJ9lVfF155YtrBgw1o0df/gKNnuQH+Wm+XUuxIo9o6Ij+vGFxMqcwzNsuc7/+DKDz2IclNLrmuNWV2TfLrs8d3mj1usFD8hvPBUPTnbUzfJRuGdbyMVEAfsoZEQALuXMvpT5TIIaBpmh6+JOI2/ySKyzphfflaAJXjEIoXC/MewYiIF+FmpN2ra105zYeIFhNhVYrSNFKrfDVN+ZdNzPKytQ63O9dCUEf4AQ6FGszq44in6ECjGAD4PgLh+qApxF9uTIrlucy3Lx9tby1zlQeDK/Qlt/u3fL3/5INxpoONqp86YZfzBrN7WiUwG12x8cG+BUd6855yW37WZdMgNNswm+iriKuT3Z3MEPx/WlmEfjyzrvQ9GiR4JL9Rp4LQX/LIIQnkCWwa+lY4m++r81xB04zyeY4xFrcUafBtIBrV2wWyjFVhQFW2+0NKpoKZYAl9hWKRQPYgQldrqP1vvg0NqCadYMINVdNAF1QT7N1ONjb2op11Mh4CXxp9KCkC0CE085PAK1HvMK1h5mWJNW/oKNa9uufUa2uu08SrExkpfTWclraDuKm5/eZhME8wqZqkryA4y5ve+3vcsgB0hoejqOrZ2LosRvJGCQuFOG1TcoUzdebClt0sDSmwx+r2U=
   file:
