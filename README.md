@@ -17,7 +17,7 @@ USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
 
 VERSION:
-   0.1
+   0.2
 
 AUTHOR:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -25,6 +25,7 @@ AUTHOR:
 GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
    --password password, -p password  your TUNET password
+   --ip value                        authenticating for specified IP address
    --no-check, -n                    skip online checking, always send login request
    --logout, -o                      log out of the online account
    --ipv6, -6                        authenticating for IPv6 (auth6)
@@ -38,3 +39,12 @@ GLOBAL OPTIONS:
 ```
 go build -o auth-thu github.com/z4yx/GoAuthing/cli
 ```
+
+## Acknowledgments
+
+This project was inspired by the following projects:
+
+- https://github.com/jiegec/auth-tsinghua
+- https://github.com/Berrysoft/ClassLibrary
+
+
