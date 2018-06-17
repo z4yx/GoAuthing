@@ -3,7 +3,7 @@ sudo: false
 go:
 - 1.8.x
 before_install:
-- go get -u github.com/z4yx/GoAuthing
+- go get -u github.com/z4yx/GoAuthing/cli
 install:
 - 
 script:
