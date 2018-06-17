@@ -31,19 +31,19 @@ func extractJSONFromJSONP(jsonp, callbackName string) (string, error) {
 	return jsonp[l+1 : len(jsonp)-1], nil
 }
 
-func buildChallengeParams(username string) url.Values {
+func buildChallengeParams(username string, anotherIP string) url.Values {
 
 	challParams := url.Values{
 		"username":     []string{username},
-		"ip":           []string{""},
+		"ip":           []string{anotherIP},
 		"double_stack": []string{"1"},
 	}
 
 	return challParams
 }
 
-func buildLoginParams(username, password, token string, logout bool) (loginParams url.Values, err error) {
-	ip := ""
+func buildLoginParams(username, password, token string, logout bool, anotherIP string) (loginParams url.Values, err error) {
+	ip := anotherIP
 	acID := "1"
 	//Don't care
 	hmd5 := "00000000000000000000000000000000" //md5sum(password)
@@ -129,10 +129,10 @@ func IsOnline(proto int) (online bool, err error) {
 	return
 }
 
-func LoginLogout(username, password string, proto int, logout bool) (success bool, err error) {
+func LoginLogout(username, password string, proto int, logout bool, anotherIP string) (success bool, err error) {
 	success = false
 	logger.Debugf("Getting challenge...\n")
-	body, err := GetJSON(fmt.Sprintf(ChallengeUriBase, proto), buildChallengeParams(username))
+	body, err := GetJSON(fmt.Sprintf(ChallengeUriBase, proto), buildChallengeParams(username, anotherIP))
 	if err != nil {
 		return
 	}
@@ -154,7 +154,7 @@ func LoginLogout(username, password string, proto int, logout bool) (success boo
 		return
 	}
 
-	loginParams, err := buildLoginParams(username, password, token, logout)
+	loginParams, err := buildLoginParams(username, password, token, logout, anotherIP)
 	if err != nil {
 		return
 	}
