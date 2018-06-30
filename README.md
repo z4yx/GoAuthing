@@ -37,6 +37,7 @@ GLOBAL OPTIONS:
 ## Build
 
 ```
+go get -u github.com/z4yx/GoAuthing/cli
 go build -o auth-thu github.com/z4yx/GoAuthing/cli
 ```
 
