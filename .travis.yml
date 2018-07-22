@@ -12,6 +12,7 @@ script:
 - GOARCH=amd64 GOOS=windows go build -o auth-thu.x64.exe github.com/z4yx/GoAuthing/cli
 - GOARCH=arm64 GOOS=linux go build -o auth-thu.linux.arm64 github.com/z4yx/GoAuthing/cli
 - GOARCH=arm GOOS=linux go build -o auth-thu.linux.arm github.com/z4yx/GoAuthing/cli
+- GOARCH=mipsel GOOS=linux go build -o auth-thu.linux.mipsel github.com/z4yx/GoAuthing/cli
 deploy:
   provider: releases
   skip_cleanup: true
@@ -23,6 +24,7 @@ deploy:
     - auth-thu.linux.amd64
     - auth-thu.linux.arm64
     - auth-thu.linux.arm
+    - auth-thu.linux.mipsel
   on:
     tags: true
     repo: z4yx/GoAuthing
