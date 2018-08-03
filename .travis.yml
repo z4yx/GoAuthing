@@ -13,6 +13,7 @@ script:
 - GOARCH=arm64 GOOS=linux go build -o auth-thu.linux.arm64 github.com/z4yx/GoAuthing/cli
 - GOARCH=arm GOOS=linux go build -o auth-thu.linux.arm github.com/z4yx/GoAuthing/cli
 - GOARCH=mipsle GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mipsle github.com/z4yx/GoAuthing/cli
+- GOARCH=mips GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mips github.com/z4yx/GoAuthing/cli
 deploy:
   provider: releases
   skip_cleanup: true
@@ -25,6 +26,7 @@ deploy:
     - auth-thu.linux.arm64
     - auth-thu.linux.arm
     - auth-thu.linux.mipsle
+    - auth-thu.linux.mips
   on:
     tags: true
     repo: z4yx/GoAuthing
