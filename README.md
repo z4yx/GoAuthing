@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/z4yx/GoAuthing.svg?branch=master)](https://travis-ci.org/z4yx/GoAuthing)
 ![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)
 
-Authenticating utility for auth4/6.tsinghua.edu.cn
+A commandline Tunet (auth4/6.tsinghua.edu.cn) authentication tool.
 
 ## Usage
 
@@ -11,7 +11,7 @@ Simply try `./auth-thu`, then enter your user name and password.
 
 ```
 NAME:
-   auth-thu - Authenticating utility for auth.tsinghua.edu.cn
+   auth-thu - Authentication utility for auth.tsinghua.edu.cn
 
 USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
