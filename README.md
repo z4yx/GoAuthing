@@ -5,6 +5,10 @@
 
 A commandline Tunet (auth4/6.tsinghua.edu.cn) authentication tool.
 
+## Download Binary
+
+Prebuilt binaries available at https://github.com/z4yx/GoAuthing/releases
+
 ## Usage
 
 Simply try `./auth-thu`, then enter your user name and password.
