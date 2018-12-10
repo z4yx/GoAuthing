@@ -15,13 +15,13 @@ Simply try `./auth-thu`, then enter your user name and password.
 
 ```
 NAME:
-   auth-thu - Authentication utility for auth.tsinghua.edu.cn
+   auth-thu - Authenticating utility for auth.tsinghua.edu.cn (srun4000)
 
 USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
 
 VERSION:
-   0.2
+   0.3
 
 AUTHOR:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -32,7 +32,8 @@ GLOBAL OPTIONS:
    --ip value                        authenticating for specified IP address
    --no-check, -n                    skip online checking, always send login request
    --logout, -o                      log out of the online account
-   --ipv6, -6                        authenticating for IPv6 (auth6)
+   --ipv6, -6                        authenticating for IPv6 (auth6.tsinghua)
+   --host value                      use customized hostname of srun4000
    --help, -h                        print the help
    --debug                           print debug messages
    --version, -v                     print the version

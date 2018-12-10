@@ -3,7 +3,6 @@ package libauth
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -12,11 +11,6 @@ import (
 
 	"github.com/juju/loggo"
 )
-
-const LogUriBase = "https://auth%d.tsinghua.edu.cn/cgi-bin/srun_portal"
-const OnlineCheckUriBase = "https://auth%d.tsinghua.edu.cn/srun_portal_pc.php"
-const UsageUriBase = "https://auth%d.tsinghua.edu.cn/rad_user_info.php"
-const ChallengeUriBase = "https://auth%d.tsinghua.edu.cn/cgi-bin/get_challenge"
 
 var logger = loggo.GetLogger("libauth")
 
@@ -103,7 +97,7 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 	return extractJSONFromJSONP(string(body), CB)
 }
 
-func IsOnline(proto int) (online bool, err error) {
+func IsOnline(host *UrlProvider) (online bool, err error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -118,7 +112,7 @@ func IsOnline(proto int) (online bool, err error) {
 	params := url.Values{
 		"ac_id": []string{"1"},
 	}
-	url := fmt.Sprintf(OnlineCheckUriBase, proto) + "?" + params.Encode()
+	url := host.OnlineCheckUriBase() + "?" + params.Encode()
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err := netClient.Get(url)
 	if err != nil {
@@ -129,10 +123,10 @@ func IsOnline(proto int) (online bool, err error) {
 	return
 }
 
-func LoginLogout(username, password string, proto int, logout bool, anotherIP string) (success bool, err error) {
+func LoginLogout(username, password string, host *UrlProvider, logout bool, anotherIP string) (success bool, err error) {
 	success = false
 	logger.Debugf("Getting challenge...\n")
-	body, err := GetJSON(fmt.Sprintf(ChallengeUriBase, proto), buildChallengeParams(username, anotherIP))
+	body, err := GetJSON(host.ChallengeUriBase(), buildChallengeParams(username, anotherIP))
 	if err != nil {
 		return
 	}
@@ -159,7 +153,7 @@ func LoginLogout(username, password string, proto int, logout bool, anotherIP st
 		return
 	}
 	logger.Debugf("Sending login request...\n")
-	body, err = GetJSON(fmt.Sprintf(LogUriBase, proto), loginParams)
+	body, err = GetJSON(host.LoginUriBase(), loginParams)
 	if err != nil {
 		return
 	}

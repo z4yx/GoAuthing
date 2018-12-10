@@ -48,7 +48,6 @@ func requestPasswd(c *cli.Context) (password string, err error) {
 }
 
 func cmdAction(c *cli.Context) error {
-	proto := 4
 	logout := c.Bool("logout")
 	anotherIP := c.String("ip")
 	if c.Bool("help") {
@@ -59,11 +58,17 @@ func cmdAction(c *cli.Context) error {
 	} else {
 		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
 	}
-	if c.Bool("ipv6") {
-		proto = 6
+	domain := c.String("host")
+	if len(domain) == 0 {
+		if c.Bool("ipv6") {
+			domain = "auth6.tsinghua.edu.cn"
+		} else {
+			domain = "auth4.tsinghua.edu.cn"
+		}
 	}
+	host := libauth.NewUrlProvider(domain)
 	if len(anotherIP) == 0 && !c.Bool("no-check") {
-		online, _ := libauth.IsOnline(proto)
+		online, _ := libauth.IsOnline(host)
 		if online && !logout {
 			fmt.Println("Currently online!")
 			return nil
@@ -84,7 +89,7 @@ func cmdAction(c *cli.Context) error {
 		}
 	}
 
-	success, err := libauth.LoginLogout(username, password, proto, logout, anotherIP)
+	success, err := libauth.LoginLogout(username, password, host, logout, anotherIP)
 	action := "Login"
 	if logout {
 		action = "Logout"
@@ -101,8 +106,8 @@ func main() {
 	app := &cli.App{
 		Name:      "auth-thu",
 		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
-		Usage:     "Authenticating utility for auth.tsinghua.edu.cn",
-		Version:   "0.2",
+		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
+		Version:   "0.3",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -110,7 +115,8 @@ func main() {
 			&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
 			&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
 			&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
-			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6)"},
+			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+			&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 		},
