@@ -21,7 +21,7 @@ USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
 
 VERSION:
-   0.3
+   0.3.1
 
 AUTHOR:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -34,6 +34,7 @@ GLOBAL OPTIONS:
    --logout, -o                      log out of the online account
    --ipv6, -6                        authenticating for IPv6 (auth6.tsinghua)
    --host value                      use customized hostname of srun4000
+   --insecure                        use http instead of https
    --help, -h                        print the help
    --debug                           print debug messages
    --version, -v                     print the version

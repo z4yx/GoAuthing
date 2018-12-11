@@ -4,10 +4,14 @@ type UrlProvider struct {
 	protocol, host string
 }
 
-func NewUrlProvider(host string) *UrlProvider {
+func NewUrlProvider(host string, insecure bool) *UrlProvider {
 	u := new(UrlProvider)
 	u.host = host
-	u.protocol = "https://"
+	if insecure {
+		u.protocol = "http://"
+	} else {
+		u.protocol = "https://"
+	}
 	return u
 }
 

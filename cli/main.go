@@ -66,7 +66,7 @@ func cmdAction(c *cli.Context) error {
 			domain = "auth4.tsinghua.edu.cn"
 		}
 	}
-	host := libauth.NewUrlProvider(domain)
+	host := libauth.NewUrlProvider(domain, c.Bool("insecure"))
 	if len(anotherIP) == 0 && !c.Bool("no-check") {
 		online, _ := libauth.IsOnline(host)
 		if online && !logout {
@@ -107,7 +107,7 @@ func main() {
 		Name:      "auth-thu",
 		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
-		Version:   "0.3",
+		Version:   "0.3.1",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -117,6 +117,7 @@ func main() {
 			&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
 			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 			&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
+			&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 		},
