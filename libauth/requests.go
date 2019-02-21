@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,9 +39,8 @@ func buildChallengeParams(username string, anotherIP string) url.Values {
 	return challParams
 }
 
-func buildLoginParams(username, password, token string, logout bool, anotherIP string) (loginParams url.Values, err error) {
+func buildLoginParams(username, password, token string, logout bool, anotherIP string, acID string) (loginParams url.Values, err error) {
 	ip := anotherIP
-	acID := "1" // TODO: probing ac_id required
 	//Required by wireless network only
 	hmd5 := fmt.Sprintf("%032x", md5.Sum([]byte(password)))
 
@@ -99,7 +99,7 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 	return extractJSONFromJSONP(string(body), CB)
 }
 
-func IsOnline(host *UrlProvider) (online bool, err error) {
+func IsOnline(host *UrlProvider, acID string) (online bool, err error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -112,7 +112,7 @@ func IsOnline(host *UrlProvider) (online bool, err error) {
 	}
 	online = false
 	params := url.Values{
-		"ac_id": []string{"1"},
+		"ac_id": []string{acID},
 	}
 	url := host.OnlineCheckUriBase() + "?" + params.Encode()
 	logger.Debugf("GET \"%s\"\n", url)
@@ -125,7 +125,38 @@ func IsOnline(host *UrlProvider) (online bool, err error) {
 	return
 }
 
-func LoginLogout(username, password string, host *UrlProvider, logout bool, anotherIP string) (success bool, err error) {
+func GetAcID() (acID string, err error) {
+	var netClient = &http.Client{
+		Timeout: time.Second * 2,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
+			return errors.New("should not redirect")
+		},
+	}
+	acID = ""
+	url := "http://net.tsinghua.edu.cn/"
+	logger.Debugf("GET \"%s\"\n", url)
+	resp, err := netClient.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	regexMatchAcID := regexp.MustCompile(`/index_([0-9]+)\.html`)
+	matches := regexMatchAcID.FindStringSubmatch(string(body))
+	if len(matches) < 2 {
+		err = errors.New("ac_id not found")
+		return
+	}
+	acID = matches[1]
+	logger.Debugf("ac_id=%s\n", acID)
+	return
+}
+
+func LoginLogout(username, password string, host *UrlProvider, logout bool, anotherIP string, acID string) (success bool, err error) {
 	success = false
 	logger.Debugf("Getting challenge...\n")
 	body, err := GetJSON(host.ChallengeUriBase(), buildChallengeParams(username, anotherIP))
@@ -150,7 +181,7 @@ func LoginLogout(username, password string, host *UrlProvider, logout bool, anot
 		return
 	}
 
-	loginParams, err := buildLoginParams(username, password, token, logout, anotherIP)
+	loginParams, err := buildLoginParams(username, password, token, logout, anotherIP, acID)
 	if err != nil {
 		return
 	}

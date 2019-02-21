@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/z4yx/GoAuthing.svg?branch=master)](https://travis-ci.org/z4yx/GoAuthing)
 ![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)
 
-A commandline Tunet (auth4/6.tsinghua.edu.cn) authentication tool.
+A commandline Tunet (auth4/6.tsinghua.edu.cn, Tsinghua-IPv4) authentication tool.
 
 ## Download Binary
 
@@ -21,7 +21,7 @@ USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
 
 VERSION:
-   0.3.1
+   1.0
 
 AUTHOR:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>

@@ -50,6 +50,7 @@ func requestPasswd(c *cli.Context) (password string, err error) {
 func cmdAction(c *cli.Context) error {
 	logout := c.Bool("logout")
 	anotherIP := c.String("ip")
+	acID := "1"
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
@@ -65,10 +66,16 @@ func cmdAction(c *cli.Context) error {
 		} else {
 			domain = "auth4.tsinghua.edu.cn"
 		}
+
+		// Probe the ac_id parameter
+		// We do this only in Tsinghua, since it requires access to net.tsinghua.edu.cn
+		if retAcID, err := libauth.GetAcID(); err == nil {
+			acID = retAcID
+		}
 	}
 	host := libauth.NewUrlProvider(domain, c.Bool("insecure"))
 	if len(anotherIP) == 0 && !c.Bool("no-check") {
-		online, _ := libauth.IsOnline(host)
+		online, _ := libauth.IsOnline(host, acID)
 		if online && !logout {
 			fmt.Println("Currently online!")
 			return nil
@@ -89,7 +96,7 @@ func cmdAction(c *cli.Context) error {
 		}
 	}
 
-	success, err := libauth.LoginLogout(username, password, host, logout, anotherIP)
+	success, err := libauth.LoginLogout(username, password, host, logout, anotherIP, acID)
 	action := "Login"
 	if logout {
 		action = "Logout"
@@ -107,7 +114,7 @@ func main() {
 		Name:      "auth-thu",
 		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
-		Version:   "0.3.1",
+		Version:   "1.0",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
