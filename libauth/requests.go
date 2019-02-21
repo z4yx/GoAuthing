@@ -1,8 +1,10 @@
 package libauth
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -38,9 +40,9 @@ func buildChallengeParams(username string, anotherIP string) url.Values {
 
 func buildLoginParams(username, password, token string, logout bool, anotherIP string) (loginParams url.Values, err error) {
 	ip := anotherIP
-	acID := "1"
-	//Don't care
-	hmd5 := "00000000000000000000000000000000" //md5sum(password)
+	acID := "1" // TODO: probing ac_id required
+	//Required by wireless network only
+	hmd5 := fmt.Sprintf("%032x", md5.Sum([]byte(password)))
 
 	action := "login"
 	if logout {
