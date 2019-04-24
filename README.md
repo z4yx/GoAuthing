@@ -40,6 +40,16 @@ GLOBAL OPTIONS:
    --version, -v                     print the version
 ```
 
+Write a config file to store your username & password in the following format.
+The default location of config file is `~/.auth-thu`.
+
+```
+{
+  "username": your-username,
+  "password": your-password
+}
+```
+
 ## Build
 
 ```
@@ -53,5 +63,3 @@ This project was inspired by the following projects:
 
 - https://github.com/jiegec/auth-tsinghua
 - https://github.com/Berrysoft/ClassLibrary
-
-

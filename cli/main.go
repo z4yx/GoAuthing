@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"path"
+	"io/ioutil"
+	"encoding/json"
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
@@ -12,10 +15,30 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+type Settings struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 var logger = loggo.GetLogger("")
+var settings Settings
+
+func parseSettingsFile(path string) error {
+	sf, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer sf.Close()
+	bv, _ := ioutil.ReadAll(sf)
+	json.Unmarshal(bv, &settings)
+	return nil
+}
 
 func requestUser(c *cli.Context) (username string, err error) {
 	username = c.String("username")
+	if len(username) == 0 {
+		username = settings.Username
+	}
 	if len(username) == 0 {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Username: ")
@@ -30,6 +53,9 @@ func requestUser(c *cli.Context) (username string, err error) {
 
 func requestPasswd(c *cli.Context) (password string, err error) {
 	password = c.String("password")
+	if len(password) == 0 {
+		password = settings.Password
+	}
 	if len(password) == 0 {
 		var b []byte
 		fmt.Printf("Password: ")
@@ -54,6 +80,12 @@ func cmdAction(c *cli.Context) error {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
+	cf := c.String("config-file")
+	if len(cf) == 0 {
+		homedir, _ := os.UserHomeDir()
+		cf = path.Join(homedir, ".auth-thu")
+	}
+	parseSettingsFile(cf)
 	if c.Bool("debug") {
 		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
 	} else {
@@ -119,6 +151,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
+			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
 			&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
 			&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
