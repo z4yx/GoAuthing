@@ -1,11 +1,11 @@
 language: go
 sudo: false
 go:
-- 1.8.x
+- 1.12.x
 before_install:
 - go get -u github.com/z4yx/GoAuthing/cli
 install:
-- 
+-
 script:
 - GOARCH=amd64 GOOS=linux go build -o auth-thu.linux.amd64 github.com/z4yx/GoAuthing/cli
 - GOARCH=amd64 GOOS=darwin go build -o auth-thu.macos github.com/z4yx/GoAuthing/cli
