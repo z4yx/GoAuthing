@@ -13,6 +13,8 @@ import (
 	"github.com/juju/loggo"
 	"github.com/z4yx/GoAuthing/libauth"
 	cli "gopkg.in/urfave/cli.v1"
+
+	"../libtunet"
 )
 
 type Settings struct {
@@ -164,6 +166,12 @@ func cmdAction(c *cli.Context) error {
 	return nil
 }
 
+func cmdLogin(c *cli.Context) error {
+	loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
+	libtunet.LoginLogout("lht18", " ", false)
+	return nil
+}
+
 func main() {
 	app := &cli.App{
 		Name:      "auth-thu",
@@ -183,6 +191,13 @@ func main() {
 			&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
+		},
+		Commands: []cli.Command{
+			cli.Command{
+				Name: "login",
+				Usage: "Login via net.tsinghua.edu.cn",
+				Action: cmdLogin,
+			},
 		},
 		Action:  cmdAction,
 		Authors: []cli.Author{{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"}},
