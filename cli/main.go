@@ -44,11 +44,11 @@ func parseSettingsFile(path string) error {
 
 func mergeCliSettings(c *cli.Context) error {
 	var merged Settings
-	merged.Username = c.String("username")
+	merged.Username = c.GlobalString("username")
 	if len(merged.Username) == 0 {
 		merged.Username = settings.Username
 	}
-	merged.Password = c.String("password")
+	merged.Password = c.GlobalString("password")
 	if len(merged.Password) == 0 {
 		merged.Password = settings.Password
 	}
@@ -63,7 +63,7 @@ func mergeCliSettings(c *cli.Context) error {
 	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
 	merged.V6 = settings.V6 || c.Bool("ipv6")
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
-	merged.Debug = settings.Debug || c.Bool("debug")
+	merged.Debug = settings.Debug || c.GlobalBool("debug")
 	settings = merged
 	return nil
 }
@@ -103,7 +103,7 @@ func parseSettings(c *cli.Context) error {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
-	cf := c.String("config-file")
+	cf := c.GlobalString("config-file")
 	if len(cf) == 0 {
 		homedir, _ := os.UserHomeDir()
 		cf = path.Join(homedir, ".auth-thu")
@@ -223,7 +223,7 @@ func main() {
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.2",
+		Version:  "1.3",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},

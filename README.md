@@ -25,7 +25,7 @@ USAGE:
 
 VERSION:
 
-   1.2
+   1.3
 
 AUTHORS:
   Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
