@@ -2,6 +2,8 @@ language: go
 sudo: false
 go:
 - 1.12.x
+env:
+  - GO111MODULE=on
 before_install:
 - go get -u github.com/z4yx/GoAuthing/cli
 install:

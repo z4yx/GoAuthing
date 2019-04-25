@@ -11,8 +11,10 @@ import (
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
-	"github.com/z4yx/GoAuthing/libauth"
 	cli "gopkg.in/urfave/cli.v1"
+
+	"auth-thu/libauth"
+	"auth-thu/libtunet"
 )
 
 type Settings struct {
@@ -97,9 +99,7 @@ func requestPasswd() (err error) {
 	return
 }
 
-func cmdAction(c *cli.Context) error {
-	logout := c.Bool("logout")
-	acID := "1"
+func parseSettings(c *cli.Context) error {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
@@ -110,6 +110,13 @@ func cmdAction(c *cli.Context) error {
 	}
 	parseSettingsFile(cf)
 	mergeCliSettings(c)
+	return nil
+}
+
+func cmdAuth(c *cli.Context) error {
+	parseSettings(c)
+	logout := c.Bool("logout")
+	acID := "1"
 	if settings.Debug {
 		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
 	} else {
@@ -164,28 +171,97 @@ func cmdAction(c *cli.Context) error {
 	return nil
 }
 
+func cmdLogin(c *cli.Context) error {
+	parseSettings(c)
+	if settings.Debug {
+		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
+	}
+	err := requestUser()
+	if err != nil {
+		return err
+	}
+	err = requestPasswd()
+	if err != nil {
+		return err
+	}
+	success, err := libtunet.LoginLogout(settings.Username, settings.Password, false)
+	if success {
+		fmt.Printf("Login Successfully!\n")
+	} else {
+		fmt.Printf("Login Failed: %s\n", err.Error())
+	}
+	return err
+}
+
+func cmdLogout(c *cli.Context) error {
+	parseSettings(c)
+	if settings.Debug {
+		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
+	}
+	err := requestUser()
+	if err != nil {
+		return err
+	}
+	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
+	if success {
+		fmt.Printf("Logout Successfully!\n")
+	} else {
+		fmt.Printf("Logout Failed: %s\n", err.Error())
+	}
+	return err
+}
+
 func main() {
 	app := &cli.App{
 		Name:      "auth-thu",
-		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
-		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
-		Version:   "1.1",
+		UsageText: `auth-thu [options]
+	 auth-thu [options] auth [auth_options]
+	 auth-thu [options] login
+	 auth-thu [options] logout`,
+		Usage:     "Authenticating utility for Tsinghua",
+		Version:   "1.2",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
-			&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
-			&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
-			&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
-			&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
-			&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
-			&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
-			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
+			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 		},
-		Action:  cmdAction,
-		Authors: []cli.Author{{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"}},
+		Commands: []cli.Command{
+			cli.Command{
+				Name: "auth",
+				Usage: "(default) Auth via auth4/6.tsinghua",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
+					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
+					&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
+					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
+					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
+				},
+				Action: cmdAuth,
+			},
+			cli.Command{
+				Name: "login",
+				Usage: "Login via net.tsinghua",
+				Action: cmdLogin,
+			},
+			cli.Command{
+				Name: "logout",
+				Usage: "Logout via net.tsinghua",
+				Action: cmdLogout,
+			},
+		},
+		Action:  cmdAuth,
+		Authors: []cli.Author{
+			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
+			{Name: "Nogeek", Email: "ritou11@gmail.com"},
+		},
 	}
 
 	app.Run(os.Args)
