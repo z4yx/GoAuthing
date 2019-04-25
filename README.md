@@ -21,7 +21,7 @@ USAGE:
    auth-thu [-u <username>] [-p <password>] [options]
 
 VERSION:
-   1.0
+   1.1
 
 AUTHOR:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -40,13 +40,19 @@ GLOBAL OPTIONS:
    --version, -v                     print the version
 ```
 
-Write a config file to store your username & password in the following format.
+Write a config file to store your username & password or other options in the following format.
 The default location of config file is `~/.auth-thu`.
 
 ```
 {
   "username": your-username,
-  "password": your-password
+  "password": your-password,
+  "host": "auth4.tsinghua.edu.cn",
+  "ip": "166.xxx.xx.xx",
+  "debug": false,
+  "useV6": false,
+  "noCheck": false,
+  "insecure": false
 }
 ```
 

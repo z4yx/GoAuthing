@@ -18,6 +18,12 @@ import (
 type Settings struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Ip 			 string `json:"ip"`
+	Host		 string `json:"host"`
+	NoCheck  bool   `json:"noCheck"`
+	V6 			 bool 	`json:"useV6"`
+	Insecure bool 	`json:"insecure"`
+	Debug		 bool 	`json:"debug"`
 }
 
 var logger = loggo.GetLogger("")
@@ -34,29 +40,47 @@ func parseSettingsFile(path string) error {
 	return nil
 }
 
-func requestUser(c *cli.Context) (username string, err error) {
-	username = c.String("username")
-	if len(username) == 0 {
-		username = settings.Username
+func mergeCliSettings(c *cli.Context) error {
+	var merged Settings
+	merged.Username = c.String("username")
+	if len(merged.Username) == 0 {
+		merged.Username = settings.Username
 	}
-	if len(username) == 0 {
+	merged.Password = c.String("password")
+	if len(merged.Password) == 0 {
+		merged.Password = settings.Password
+	}
+	merged.Ip = c.String("ip")
+	if len(merged.Ip) == 0 {
+		merged.Ip = settings.Ip
+	}
+	merged.Host = c.String("host")
+	if len(merged.Host) == 0 {
+		merged.Host = settings.Host
+	}
+	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
+	merged.V6 = settings.V6 || c.Bool("ipv6")
+	merged.Insecure = settings.Insecure || c.Bool("insecure")
+	merged.Debug = settings.Debug || c.Bool("debug")
+	settings = merged
+	return nil
+}
+
+func requestUser() (err error) {
+	if len(settings.Username) == 0 {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Username: ")
-		username, _ = reader.ReadString('\n')
-		username = strings.TrimSpace(username)
+		settings.Username, _ = reader.ReadString('\n')
+		settings.Username = strings.TrimSpace(settings.Username)
 	}
-	if len(username) == 0 {
+	if len(settings.Username) == 0 {
 		err = cli.NewExitError("username can't be empty", 1)
 	}
 	return
 }
 
-func requestPasswd(c *cli.Context) (password string, err error) {
-	password = c.String("password")
-	if len(password) == 0 {
-		password = settings.Password
-	}
-	if len(password) == 0 {
+func requestPasswd() (err error) {
+	if len(settings.Password) == 0 {
 		var b []byte
 		fmt.Printf("Password: ")
 		b, err = gopass.GetPasswdMasked()
@@ -65,9 +89,9 @@ func requestPasswd(c *cli.Context) (password string, err error) {
 			err = cli.NewExitError("interrupted", 1)
 			return
 		}
-		password = string(b)
+		settings.Password = string(b)
 	}
-	if len(password) == 0 {
+	if len(settings.Password) == 0 {
 		err = cli.NewExitError("password can't be empty", 1)
 	}
 	return
@@ -75,7 +99,6 @@ func requestPasswd(c *cli.Context) (password string, err error) {
 
 func cmdAction(c *cli.Context) error {
 	logout := c.Bool("logout")
-	anotherIP := c.String("ip")
 	acID := "1"
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
@@ -86,14 +109,15 @@ func cmdAction(c *cli.Context) error {
 		cf = path.Join(homedir, ".auth-thu")
 	}
 	parseSettingsFile(cf)
-	if c.Bool("debug") {
+	mergeCliSettings(c)
+	if settings.Debug {
 		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
 	} else {
 		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
 	}
-	domain := c.String("host")
+	domain := settings.Host
 	if len(domain) == 0 {
-		if c.Bool("ipv6") {
+		if settings.V6 {
 			domain = "auth6.tsinghua.edu.cn"
 		} else {
 			domain = "auth4.tsinghua.edu.cn"
@@ -105,8 +129,8 @@ func cmdAction(c *cli.Context) error {
 			acID = retAcID
 		}
 	}
-	host := libauth.NewUrlProvider(domain, c.Bool("insecure"))
-	if len(anotherIP) == 0 && !c.Bool("no-check") {
+	host := libauth.NewUrlProvider(domain, settings.Insecure)
+	if len(settings.Ip) == 0 && !settings.NoCheck {
 		online, _ := libauth.IsOnline(host, acID)
 		if online && !logout {
 			fmt.Println("Currently online!")
@@ -116,19 +140,18 @@ func cmdAction(c *cli.Context) error {
 			return nil
 		}
 	}
-	username, err := requestUser(c)
+	err := requestUser()
 	if err != nil {
 		return err
 	}
-	password := ""
 	if !logout {
-		password, err = requestPasswd(c)
+		err = requestPasswd()
 		if err != nil {
 			return err
 		}
 	}
 
-	success, err := libauth.LoginLogout(username, password, host, logout, anotherIP, acID)
+	success, err := libauth.LoginLogout(settings.Username, settings.Password, host, logout, settings.Ip, acID)
 	action := "Login"
 	if logout {
 		action = "Logout"
@@ -146,7 +169,7 @@ func main() {
 		Name:      "auth-thu",
 		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
-		Version:   "1.0",
+		Version:   "1.1",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
