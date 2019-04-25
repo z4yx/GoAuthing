@@ -30,7 +30,7 @@ func LoginLogout(username, password string, logout bool) (success bool, err erro
 		action = "Login"
 	}
 	loginParams := url.Values{
-		"action":   []string{"logout"},
+		"action": []string{"logout"},
 	}
 	if !logout {
 		loginParams = url.Values{

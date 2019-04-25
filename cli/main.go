@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
-	"fmt"
-	"os"
-	"strings"
-	"path"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
@@ -20,12 +20,12 @@ import (
 type Settings struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Ip 			 string `json:"ip"`
-	Host		 string `json:"host"`
+	Ip       string `json:"ip"`
+	Host     string `json:"host"`
 	NoCheck  bool   `json:"noCheck"`
-	V6 			 bool 	`json:"useV6"`
-	Insecure bool 	`json:"insecure"`
-	Debug		 bool 	`json:"debug"`
+	V6       bool   `json:"useV6"`
+	Insecure bool   `json:"insecure"`
+	Debug    bool   `json:"debug"`
 }
 
 var logger = loggo.GetLogger("")
@@ -217,14 +217,14 @@ func cmdLogout(c *cli.Context) error {
 
 func main() {
 	app := &cli.App{
-		Name:      "auth-thu",
+		Name: "auth-thu",
 		UsageText: `auth-thu [options]
 	 auth-thu [options] auth [auth_options]
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
-		Usage:     "Authenticating utility for Tsinghua",
-		Version:   "1.2",
-		HideHelp:  true,
+		Usage:    "Authenticating utility for Tsinghua",
+		Version:  "1.2",
+		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
@@ -234,7 +234,7 @@ func main() {
 		},
 		Commands: []cli.Command{
 			cli.Command{
-				Name: "auth",
+				Name:  "auth",
 				Usage: "(default) Auth via auth4/6.tsinghua",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
@@ -247,17 +247,17 @@ func main() {
 				Action: cmdAuth,
 			},
 			cli.Command{
-				Name: "login",
-				Usage: "Login via net.tsinghua",
+				Name:   "login",
+				Usage:  "Login via net.tsinghua",
 				Action: cmdLogin,
 			},
 			cli.Command{
-				Name: "logout",
-				Usage: "Logout via net.tsinghua",
+				Name:   "logout",
+				Usage:  "Logout via net.tsinghua",
 				Action: cmdLogout,
 			},
 		},
-		Action:  cmdAuth,
+		Action: cmdAuth,
 		Authors: []cli.Author{
 			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
 			{Name: "Nogeek", Email: "ritou11@gmail.com"},
