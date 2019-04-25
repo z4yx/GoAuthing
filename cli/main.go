@@ -11,9 +11,9 @@ import (
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
-	"github.com/z4yx/GoAuthing/libauth"
 	cli "gopkg.in/urfave/cli.v1"
 
+	"../libauth"
 	"../libtunet"
 )
 
@@ -181,7 +181,7 @@ func cmdLogin(c *cli.Context) error {
 	err := requestUser()
 	if err != nil {
 		return err
-}
+	}
 	err = requestPasswd()
 	if err != nil {
 		return err
@@ -196,11 +196,21 @@ func cmdLogin(c *cli.Context) error {
 }
 
 func cmdLogout(c *cli.Context) error {
-	success, err := libtunet.LoginLogout("lht18", " ", true)
+	parseSettings(c)
+	if settings.Debug {
+		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
+	}
+	err := requestUser()
+	if err != nil {
+		return err
+	}
+	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
 	if success {
 		fmt.Printf("Logout Successfully!\n")
 	} else {
-		fmt.Printf("Logout Failed! %s\n", err.Error())
+		fmt.Printf("Logout Failed: %s\n", err.Error())
 	}
 	return err
 }
@@ -208,7 +218,10 @@ func cmdLogout(c *cli.Context) error {
 func main() {
 	app := &cli.App{
 		Name:      "auth-thu",
-		UsageText: "auth-thu [-u <username>] [-p <password>] [options]",
+		UsageText: `auth-thu [options]
+	 auth-thu [options] auth [auth_options]
+	 auth-thu [options] login
+	 auth-thu [options] logout`,
 		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
 		Version:   "1.1",
 		HideHelp:  true,
@@ -221,18 +234,8 @@ func main() {
 		},
 		Commands: []cli.Command{
 			cli.Command{
-				Name: "login",
-				Usage: "Login via net.tsinghua",
-				Action: cmdLogin,
-			},
-			cli.Command{
-				Name: "logout",
-				Usage: "Logout via net.tsinghua",
-				Action: cmdLogout,
-			},
-			cli.Command{
 				Name: "auth",
-				Usage: "Auth via auth4/6.tsinghua",
+				Usage: "(default) Auth via auth4/6.tsinghua",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
 					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
@@ -242,6 +245,16 @@ func main() {
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 				},
 				Action: cmdAuth,
+			},
+			cli.Command{
+				Name: "login",
+				Usage: "Login via net.tsinghua",
+				Action: cmdLogin,
+			},
+			cli.Command{
+				Name: "logout",
+				Usage: "Logout via net.tsinghua",
+				Action: cmdLogout,
 			},
 		},
 		Action:  cmdAuth,
