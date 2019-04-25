@@ -15,28 +15,40 @@ Simply try `./auth-thu`, then enter your user name and password.
 
 ```
 NAME:
-   auth-thu - Authenticating utility for auth.tsinghua.edu.cn (srun4000)
+   auth-thu - Authenticating utility for Tsinghua
 
 USAGE:
-   auth-thu [-u <username>] [-p <password>] [options]
+   auth-thu [options]
+   auth-thu [options] auth [auth_options]
+   auth-thu [options] login
+   auth-thu [options] logout
 
 VERSION:
-   1.0
 
-AUTHOR:
-   Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
+   1.2
+
+AUTHORS:
+  Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
+  Nogeek <ritou11@gmail.com>
+
+COMMANDS:
+     auth    (default) Auth via auth4/6.tsinghua
+       OPTIONS:
+           --ip value      authenticating for specified IP address
+           --no-check, -n  skip online checking, always send login request
+           --logout, -o    log out of the online account
+           --ipv6, -6      authenticating for IPv6 (auth6.tsinghua)
+           --host value    use customized hostname of srun4000
+           --insecure      use http instead of https
+     login   Login via net.tsinghua
+     logout  Logout via net.tsinghua
 
 GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
    --password password, -p password  your TUNET password
-   --ip value                        authenticating for specified IP address
-   --no-check, -n                    skip online checking, always send login request
-   --logout, -o                      log out of the online account
-   --ipv6, -6                        authenticating for IPv6 (auth6.tsinghua)
-   --host value                      use customized hostname of srun4000
-   --insecure                        use http instead of https
-   --help, -h                        print the help
+   --config-file path, -c path       path to your config file, default ~/.auth-thu
    --debug                           print debug messages
+   --help, -h                        print the help
    --version, -v                     print the version
 ```
 

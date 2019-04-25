@@ -222,8 +222,8 @@ func main() {
 	 auth-thu [options] auth [auth_options]
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
-		Usage:     "Authenticating utility for auth.tsinghua.edu.cn (srun4000)",
-		Version:   "1.1",
+		Usage:     "Authenticating utility for Tsinghua",
+		Version:   "1.2",
 		HideHelp:  true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -258,7 +258,10 @@ func main() {
 			},
 		},
 		Action:  cmdAuth,
-		Authors: []cli.Author{{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"}},
+		Authors: []cli.Author{
+			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
+			{Name: "Nogeek", Email: "ritou11@gmail.com"},
+		},
 	}
 
 	app.Run(os.Args)
