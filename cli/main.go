@@ -13,8 +13,8 @@ import (
 	"github.com/juju/loggo"
 	cli "gopkg.in/urfave/cli.v1"
 
-	"../libauth"
-	"../libtunet"
+	"auth-thu/libauth"
+	"auth-thu/libtunet"
 )
 
 type Settings struct {

@@ -2,15 +2,12 @@ package libtunet
 
 import (
 	"crypto/md5"
-	//"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	//"regexp"
-	//"strings"
 	"time"
 
 	"github.com/juju/loggo"
