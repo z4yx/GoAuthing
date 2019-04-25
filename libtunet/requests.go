@@ -1,10 +1,11 @@
 package libtunet
 
 import (
-	//"crypto/md5"
+	"crypto/md5"
 	//"encoding/json"
-	//"errors"
-	//"fmt"
+	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -24,19 +25,29 @@ func md5sum(input string) string {
 }
 
 func LoginLogout(username, password string, logout bool) (success bool, err error) {
-	success = false
 	md5pwd := md5sum(password)
+	var action string
+	if logout {
+		action = "Logout"
+	} else {
+		action = "Login"
+	}
 	loginParams := url.Values{
-		"action":   []string{"login"},
-		"ac_id":    []string{"1"},
-		"username": []string{username},
-		"password": []string{"{MD5_HEX}" + md5pwd},
+		"action":   []string{"logout"},
+	}
+	if !logout {
+		loginParams = url.Values{
+			"action":   []string{"login"},
+			"ac_id":    []string{"1"},
+			"username": []string{username},
+			"password": []string{"{MD5_HEX}" + md5pwd},
+		}
 	}
 	netClient := &http.Client{
 		Timeout: time.Second * 2,
 	}
 	url := "http://net.tsinghua.edu.cn/do_login.php?" + loginParams.Encode()
-	logger.Debugf("Sending login request...\n")
+	logger.Debugf("Sending %s request...\n", action)
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err := netClient.Get(url)
 	if err != nil {
@@ -48,6 +59,11 @@ func LoginLogout(username, password string, logout bool) (success bool, err erro
 		return false, err
 	}
 	body := string(bodyB)
-	logger.Debugf("Login response: %v\n", body)
-	return true, err
+	logger.Debugf("%s response: %v\n", action, body)
+	if body == fmt.Sprintf("%s is successful.", action) {
+		return true, err
+	} else {
+		err = errors.New(body)
+		return false, err
+	}
 }
