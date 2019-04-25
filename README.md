@@ -57,8 +57,8 @@ The default location of config file is `~/.auth-thu`.
 
 ```
 {
-  "username": your-username,
-  "password": your-password,
+  "username": "your-username",
+  "password": "your-password",
   "host": "auth4.tsinghua.edu.cn",
   "ip": "166.xxx.xx.xx",
   "debug": false,
