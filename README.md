@@ -71,6 +71,7 @@ The default location of config file is `~/.auth-thu`.
 ## Build
 
 ```
+export GO111MODULE=on
 go get -u github.com/z4yx/GoAuthing/cli
 go build -o auth-thu github.com/z4yx/GoAuthing/cli
 ```
