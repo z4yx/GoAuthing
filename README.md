@@ -25,7 +25,7 @@ USAGE:
 
 VERSION:
 
-   1.3
+   1.3.2
 
 AUTHORS:
   Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -70,9 +70,10 @@ The default location of config file is `~/.auth-thu`.
 
 ## Build
 
+Requires Go 1.11 or above
+
 ```
 export GO111MODULE=on
-go get -u github.com/z4yx/GoAuthing/cli
 go build -o auth-thu github.com/z4yx/GoAuthing/cli
 ```
 
