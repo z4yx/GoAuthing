@@ -68,6 +68,8 @@ The default location of config file is `~/.auth-thu`.
 }
 ```
 
+To configure automatic authentication on systemd based Linux distro, take a look at `docs` folder. Just modify the path in configure files, then copy them to `/etc/systemd/system` folder.
+
 ## Build
 
 Requires Go 1.11 or above
