@@ -1,0 +1,10 @@
+[Unit]
+
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=1min
+#OnCalendar=hourly
+
+[Install]
+WantedBy=timers.target
+

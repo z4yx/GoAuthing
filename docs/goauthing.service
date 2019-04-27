@@ -1,0 +1,13 @@
+[Unit]
+Description=Authenticating utility for auth.tsinghua.edu.cn
+
+[Service]
+ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json
+Type=oneshot
+StandardOutput=journal
+User=nobody
+
+
+[Install]
+WantedBy = multi-user.target
+
