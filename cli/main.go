@@ -1,5 +1,8 @@
 package main
 
+// #include <stdlib.h>
+import "C"
+
 import (
 	"bufio"
 	"encoding/json"
@@ -8,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"unsafe"
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
@@ -22,6 +26,7 @@ type Settings struct {
 	Password string `json:"password"`
 	Ip       string `json:"ip"`
 	Host     string `json:"host"`
+	HookSucc string `json:"hook-success"`
 	NoCheck  bool   `json:"noCheck"`
 	V6       bool   `json:"useV6"`
 	Insecure bool   `json:"insecure"`
@@ -59,6 +64,10 @@ func mergeCliSettings(c *cli.Context) error {
 	merged.Host = c.String("host")
 	if len(merged.Host) == 0 {
 		merged.Host = settings.Host
+	}
+	merged.HookSucc = c.GlobalString("hook-success")
+	if len(merged.HookSucc) == 0 {
+		merged.HookSucc = settings.HookSucc
 	}
 	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
 	merged.V6 = settings.V6 || c.Bool("ipv6")
@@ -113,6 +122,15 @@ func parseSettings(c *cli.Context) error {
 	return nil
 }
 
+func runHook(c *cli.Context) {
+	if settings.HookSucc != "" {
+		logger.Debugf("Run hook \"%s\"\n", settings.HookSucc)
+		cs := C.CString(settings.HookSucc)
+		C.system(cs)
+		C.free(unsafe.Pointer(cs))
+	}
+}
+
 func cmdAuth(c *cli.Context) error {
 	parseSettings(c)
 	logout := c.Bool("logout")
@@ -165,6 +183,7 @@ func cmdAuth(c *cli.Context) error {
 	}
 	if success {
 		fmt.Printf("%s Successfully!\n", action)
+		runHook(c)
 	} else {
 		fmt.Printf("%s Failed: %s\n", action, err.Error())
 	}
@@ -189,6 +208,7 @@ func cmdLogin(c *cli.Context) error {
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, false)
 	if success {
 		fmt.Printf("Login Successfully!\n")
+		runHook(c)
 	} else {
 		fmt.Printf("Login Failed: %s\n", err.Error())
 	}
@@ -209,6 +229,7 @@ func cmdLogout(c *cli.Context) error {
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
 	if success {
 		fmt.Printf("Logout Successfully!\n")
+		runHook(c)
 	} else {
 		fmt.Printf("Logout Failed: %s\n", err.Error())
 	}
@@ -223,12 +244,13 @@ func main() {
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.3.2",
+		Version:  "1.4",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
+			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 		},

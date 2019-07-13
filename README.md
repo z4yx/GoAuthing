@@ -25,7 +25,7 @@ USAGE:
 
 VERSION:
 
-   1.3.2
+   1.4
 
 AUTHORS:
   Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -47,6 +47,7 @@ GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
    --password password, -p password  your TUNET password
    --config-file path, -c path       path to your config file, default ~/.auth-thu
+   --hook-success value              command line to be executed in shell after successful login/out
    --debug                           print debug messages
    --help, -h                        print the help
    --version, -v                     print the version
