@@ -9,13 +9,13 @@ before_install:
 install:
 -
 script:
-- GOARCH=amd64 GOOS=linux go build -o auth-thu.linux.x86_64 ./cli
-- GOARCH=amd64 GOOS=darwin go build -o auth-thu.macos ./cli
-- GOARCH=amd64 GOOS=windows go build -o auth-thu.win64.exe ./cli
-- GOARCH=arm64 GOOS=linux go build -o auth-thu.linux.arm64 ./cli
-- GOARCH=arm GOOS=linux go build -o auth-thu.linux.arm ./cli
-- GOARCH=mipsle GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mipsle ./cli
-- GOARCH=mips GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mipsbe ./cli
+- CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o auth-thu.linux.x86_64 ./cli
+- CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o auth-thu.macos ./cli
+- CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -o auth-thu.win64.exe ./cli
+- CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build -o auth-thu.linux.arm64 ./cli
+- CGO_ENABLED=0 GOARCH=arm GOOS=linux go build -o auth-thu.linux.arm ./cli
+- CGO_ENABLED=0 GOARCH=mipsle GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mipsle ./cli
+- CGO_ENABLED=0 GOARCH=mips GOOS=linux GOMIPS=softfloat go build -o auth-thu.linux.mipsbe ./cli
 - ./auth-thu.linux.x86_64 -h
 deploy:
   provider: releases

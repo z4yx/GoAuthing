@@ -1,17 +1,14 @@
 package main
 
-// #include <stdlib.h>
-import "C"
-
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
-	"unsafe"
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
@@ -125,9 +122,10 @@ func parseSettings(c *cli.Context) error {
 func runHook(c *cli.Context) {
 	if settings.HookSucc != "" {
 		logger.Debugf("Run hook \"%s\"\n", settings.HookSucc)
-		cs := C.CString(settings.HookSucc)
-		C.system(cs)
-		C.free(unsafe.Pointer(cs))
+		cmd := exec.Command(settings.HookSucc)
+		if err := cmd.Run(); err != nil {
+			logger.Errorf("Hook execution failed: %v\n", err)
+		}
 	}
 }
 
