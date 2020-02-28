@@ -7,7 +7,8 @@ A commandline Tunet (auth4/6.tsinghua.edu.cn, Tsinghua-IPv4) authentication tool
 
 ## Download Binary
 
-Prebuilt binaries available at https://github.com/z4yx/GoAuthing/releases
+Download prebuilt binaries from https://github.com/z4yx/GoAuthing/releases  
+Or https://mirrors.tuna.tsinghua.edu.cn/github-release/z4yx/GoAuthing/
 
 ## Usage
 
