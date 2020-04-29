@@ -29,6 +29,7 @@ type Settings struct {
 	Host     string `json:"host"`
 	HookSucc string `json:"hook-success"`
 	NoCheck  bool   `json:"noCheck"`
+	KeepOn   bool   `json:"keepOnline"`
 	V6       bool   `json:"useV6"`
 	Insecure bool   `json:"insecure"`
 	Debug    bool   `json:"debug"`
@@ -72,6 +73,7 @@ func mergeCliSettings(c *cli.Context) error {
 	}
 	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
 	merged.V6 = settings.V6 || c.Bool("ipv6")
+	merged.KeepOn = settings.KeepOn || c.Bool("keep-online")
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
 	merged.Debug = settings.Debug || c.GlobalBool("debug")
 	settings = merged
@@ -133,6 +135,57 @@ func runHook(c *cli.Context) {
 	}
 }
 
+func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
+	fmt.Println("Accessing websites periodically to keep you online")
+
+	accessTarget := func(url string, ipv6 bool) (ret error) {
+		network := "tcp4"
+		if ipv6 {
+			network = "tcp6"
+		}
+		netClient := &http.Client{
+			Timeout: time.Second * 10,
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, _network, addr string) (net.Conn, error) {
+					logger.Debugf("DialContext %s (%s)\n", addr, network)
+					myDial := &net.Dialer{
+						Timeout:   6 * time.Second,
+						KeepAlive: 0,
+						DualStack: false,
+					}
+					return myDial.DialContext(ctx, network, addr)
+				},
+			},
+		}
+		for errorCount := 0; errorCount < 3; errorCount++ {
+			var resp *http.Response
+			resp, ret = netClient.Get(url)
+			if ret == nil {
+				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
+				resp.Body.Close()
+				break
+			}
+		}
+		return
+	}
+	targetInside := "http://www.tsinghua.edu.cn/"
+	targetOutside := "http://www.baidu.com/img/bd_logo1.png"
+	for {
+		v4Target := targetOutside
+		if campusOnly {
+			v4Target = targetInside
+		}
+		if ret = accessTarget(v4Target, false); ret != nil {
+			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
+			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
+			break
+		}
+		accessTarget(targetInside, true)
+		time.Sleep(20 * time.Minute)
+	}
+	return
+}
+
 func cmdAuth(c *cli.Context) error {
 	parseSettings(c)
 	logout := c.Bool("logout")
@@ -186,6 +239,13 @@ func cmdAuth(c *cli.Context) error {
 	if success {
 		fmt.Printf("%s Successfully!\n", action)
 		runHook(c)
+		if settings.KeepOn {
+			if len(settings.Ip) != 0 {
+				fmt.Printf("Cannot keep another IP online\n")
+			} else {
+				return keepAliveLoop(c, true)
+			}
+		}
 	} else {
 		fmt.Printf("%s Failed: %s\n", action, err.Error())
 	}
@@ -211,6 +271,9 @@ func cmdLogin(c *cli.Context) error {
 	if success {
 		fmt.Printf("Login Successfully!\n")
 		runHook(c)
+		if settings.KeepOn {
+			return keepAliveLoop(c, false)
+		}
 	} else {
 		fmt.Printf("Login Failed: %s\n", err.Error())
 	}
@@ -238,61 +301,14 @@ func cmdLogout(c *cli.Context) error {
 	return err
 }
 
-func cmdKeepalive(c *cli.Context) (ret error) {
+func cmdKeepalive(c *cli.Context) error {
 	parseSettings(c)
 	if settings.Debug {
 		loggo.ConfigureLoggers("<root>=DEBUG")
 	} else {
 		loggo.ConfigureLoggers("<root>=INFO")
 	}
-	fmt.Println("Accessing websites periodically to keep you online")
-
-	accessTarget := func(url string, ipv6 bool) (ret error) {
-		network := "tcp4"
-		if ipv6 {
-			network = "tcp6"
-		}
-		netClient := &http.Client{
-			Timeout: time.Second * 10,
-			Transport: &http.Transport{
-				DialContext: func(ctx context.Context, _network, addr string) (net.Conn, error) {
-					logger.Debugf("DialContext %s (%s)\n", addr, network)
-					myDial := &net.Dialer{
-						Timeout:   6 * time.Second,
-						KeepAlive: 0,
-						DualStack: false,
-					}
-					return myDial.DialContext(ctx, network, addr)
-				},
-			},
-		}
-		for errorCount := 0; errorCount < 3; errorCount++ {
-			var resp *http.Response
-			resp, ret = netClient.Get(url)
-			if ret == nil {
-				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
-				resp.Body.Close()
-				break
-			}
-		}
-		return
-	}
-	targetInside := "http://www.tsinghua.edu.cn/"
-	targetOutside := "http://www.baidu.com/img/bd_logo1.png"
-	for {
-		v4Target := targetOutside
-		if c.Bool("auth") {
-			v4Target = targetInside
-		}
-		if ret = accessTarget(v4Target, false); ret != nil {
-			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
-			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
-			break
-		}
-		accessTarget(targetInside, true)
-		time.Sleep(20 * time.Minute)
-	}
-	return
+	return keepAliveLoop(c, c.Bool("auth"))
 }
 
 func main() {
@@ -324,12 +340,16 @@ func main() {
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
+					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
 				},
 				Action: cmdAuth,
 			},
 			cli.Command{
-				Name:   "login",
-				Usage:  "Login via net.tsinghua",
+				Name:  "login",
+				Usage: "Login via net.tsinghua",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
+				},
 				Action: cmdLogin,
 			},
 			cli.Command{
