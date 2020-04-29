@@ -2,13 +2,17 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
@@ -234,6 +238,62 @@ func cmdLogout(c *cli.Context) error {
 	return err
 }
 
+func cmdKeepalive(c *cli.Context) (ret error) {
+	parseSettings(c)
+	if settings.Debug {
+		loggo.ConfigureLoggers("<root>=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("<root>=INFO")
+	}
+	fmt.Println("Accessing websites periodically to keep you online")
+
+	accessTarget := func(url string, ipv6 bool) (ret error) {
+		network := "tcp4"
+		if ipv6 {
+			network = "tcp6"
+		}
+		netClient := &http.Client{
+			Timeout: time.Second * 10,
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, _network, addr string) (net.Conn, error) {
+					logger.Debugf("DialContext %s (%s)\n", addr, network)
+					myDial := &net.Dialer{
+						Timeout:   6 * time.Second,
+						KeepAlive: 0,
+						DualStack: false,
+					}
+					return myDial.DialContext(ctx, network, addr)
+				},
+			},
+		}
+		for errorCount := 0; errorCount < 3; errorCount++ {
+			resp, ret := netClient.Get(url)
+			if ret == nil {
+				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
+				resp.Body.Close()
+				break
+			}
+		}
+		return
+	}
+	targetInside := "http://www.tsinghua.edu.cn/"
+	targetOutside := "http://www.baidu.com/img/bd_logo1.png"
+	for {
+		v4Target := targetOutside
+		if c.Bool("auth") {
+			v4Target = targetInside
+		}
+		if ret = accessTarget(v4Target, false); ret != nil {
+			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
+			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
+			break
+		}
+		accessTarget(targetInside, true)
+		time.Sleep(20 * time.Minute)
+	}
+	return
+}
+
 func main() {
 	app := &cli.App{
 		Name: "auth-thu",
@@ -275,6 +335,14 @@ func main() {
 				Name:   "logout",
 				Usage:  "Logout via net.tsinghua",
 				Action: cmdLogout,
+			},
+			cli.Command{
+				Name:  "online",
+				Usage: "Keep your computer online",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "auth, a", Usage: "keep the Auth online only"},
+				},
+				Action: cmdKeepalive,
 			},
 		},
 		Action: cmdAuth,
