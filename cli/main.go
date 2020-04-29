@@ -267,7 +267,8 @@ func cmdKeepalive(c *cli.Context) (ret error) {
 			},
 		}
 		for errorCount := 0; errorCount < 3; errorCount++ {
-			resp, ret := netClient.Get(url)
+			var resp *http.Response
+			resp, ret = netClient.Get(url)
 			if ret == nil {
 				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
 				resp.Body.Close()
