@@ -161,27 +161,46 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 			var resp *http.Response
 			resp, ret = netClient.Get(url)
 			if ret == nil {
+				defer resp.Body.Close()
 				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
-				resp.Body.Close()
-				break
+				_, ret := ioutil.ReadAll(resp.Body)
+				if ret == nil {
+					break
+				}
 			}
 		}
 		return
 	}
-	targetInside := "http://www.tsinghua.edu.cn/"
-	targetOutside := "http://www.baidu.com/img/bd_logo1.png"
-	for {
-		v4Target := targetOutside
-		if campusOnly {
-			v4Target = targetInside
+	targetInside := "https://www.tsinghua.edu.cn/"
+	// Response length must be greater than 1MB, or net.tsinghua may ignore that
+	targetOutside := "http://mirrors.aliyun.com/ubuntu/dists/focal/main/binary-amd64/Packages.gz"
+
+	stop := make(chan int, 1)
+	defer func() { stop <- 1 }()
+	go func() {
+		// Keep IPv6 online, ignore any errors
+		for {
+			select {
+			case <-stop:
+				break
+			case <-time.After(13 * time.Minute):
+				accessTarget(targetInside, true)
+			}
 		}
+	}()
+
+	v4Target := targetOutside
+	if campusOnly {
+		v4Target = targetInside
+	}
+	for {
 		if ret = accessTarget(v4Target, false); ret != nil {
 			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
 			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
 			break
 		}
-		accessTarget(targetInside, true)
-		time.Sleep(20 * time.Minute)
+		// Typically the Idle-Timeout on net.tsinghua is 4.5 hours
+		time.Sleep(2 * time.Hour)
 	}
 	return
 }
