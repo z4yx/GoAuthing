@@ -172,8 +172,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		return
 	}
 	targetInside := "https://www.tsinghua.edu.cn/"
-	// Response length must be greater than 1MB, or net.tsinghua may ignore that
-	targetOutside := "http://mirrors.aliyun.com/ubuntu/dists/focal/main/binary-amd64/Packages.gz"
+	targetOutside := "http://www.baidu.com/"
 
 	stop := make(chan int, 1)
 	defer func() { stop <- 1 }()
@@ -199,8 +198,8 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
 			break
 		}
-		// Typically the Idle-Timeout on net.tsinghua is 4.5 hours
-		time.Sleep(2 * time.Hour)
+		// Consumes ~70MB per day
+		time.Sleep(9 * time.Second)
 	}
 	return
 }
