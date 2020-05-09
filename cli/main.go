@@ -198,8 +198,8 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
 			break
 		}
-		// Consumes ~70MB per day
-		time.Sleep(9 * time.Second)
+		// Consumes ~120MB per day
+		time.Sleep(45 * time.Second)
 	}
 	return
 }
