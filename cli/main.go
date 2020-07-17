@@ -222,8 +222,8 @@ func cmdAuth(c *cli.Context) error {
 		}
 
 		// Probe the ac_id parameter
-		// We do this only in Tsinghua, since it requires access to net.tsinghua.edu.cn
-		if retAcID, err := libauth.GetAcID(); err == nil {
+		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
+		if retAcID, err := libauth.GetAcID(settings.Ip); err == nil {
 			acID = retAcID
 		}
 	}

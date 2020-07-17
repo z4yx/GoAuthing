@@ -125,7 +125,7 @@ func IsOnline(host *UrlProvider, acID string) (online bool, err error) {
 	return
 }
 
-func GetAcID() (acID string, err error) {
+func GetAcID(IP string) (acID string, err error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -134,24 +134,50 @@ func GetAcID() (acID string, err error) {
 		},
 	}
 	acID = ""
-	url := "http://net.tsinghua.edu.cn/"
-	logger.Debugf("GET \"%s\"\n", url)
-	resp, err := netClient.Get(url)
-	if err != nil {
-		return
+	var resp *http.Response
+	var body []byte
+	if len(IP) == 0 { // local machine
+		url := "http://net.tsinghua.edu.cn/"
+		logger.Debugf("GET \"%s\"\n", url)
+		resp, err = netClient.Get(url)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		regexMatchAcID := regexp.MustCompile(`/index_([0-9]+)\.html`)
+		matches := regexMatchAcID.FindStringSubmatch(string(body))
+		if len(matches) < 2 {
+			err = errors.New("ac_id not found")
+			return
+		}
+		acID = matches[1]
+	} else { // remote machine
+		data := url.Values{
+			"actionType": {"searchNasId"},
+			"ip":         {IP},
+		}
+		url := "http://usereg.tsinghua.edu.cn/ip_login_import.php"
+		logger.Debugf("POST \"%s\" %v\n", url, data)
+		resp, err = netClient.PostForm(url, data)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		str := string(body)
+		if str == "fail" {
+			err = errors.New("ip_login_import.php responds fail")
+			return
+		}
+		acID = str
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	regexMatchAcID := regexp.MustCompile(`/index_([0-9]+)\.html`)
-	matches := regexMatchAcID.FindStringSubmatch(string(body))
-	if len(matches) < 2 {
-		err = errors.New("ac_id not found")
-		return
-	}
-	acID = matches[1]
 	logger.Debugf("ac_id=%s\n", acID)
 	return
 }
