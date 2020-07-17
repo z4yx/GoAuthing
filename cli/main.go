@@ -346,7 +346,7 @@ func main() {
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.5.3",
+		Version:  "1.6",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
