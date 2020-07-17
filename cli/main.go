@@ -214,17 +214,19 @@ func cmdAuth(c *cli.Context) error {
 		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
 	}
 	domain := settings.Host
-	if len(domain) == 0 {
+	if len(settings.Host) == 0 {
 		if settings.V6 {
 			domain = "auth6.tsinghua.edu.cn"
 		} else {
 			domain = "auth4.tsinghua.edu.cn"
 		}
 
-		// Probe the ac_id parameter
-		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
-		if retAcID, err := libauth.GetAcID(settings.Ip); err == nil {
-			acID = retAcID
+		if len(settings.Ip) == 0 {
+			// Probe the ac_id parameter, required by wireless network
+			// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
+			if retAcID, err := libauth.GetAcID(); err == nil {
+				acID = retAcID
+			}
 		}
 	}
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
@@ -246,6 +248,13 @@ func cmdAuth(c *cli.Context) error {
 		err = requestPasswd()
 		if err != nil {
 			return err
+		}
+		if len(settings.Ip) != 0 && len(settings.Host) == 0 {
+			// Auth for another IP requires correct NAS ID since July 2020
+			// Tsinghua only
+			if retNasID, err := libauth.GetNasID(settings.Ip, settings.Username, settings.Password); err == nil {
+				acID = retNasID
+			}
 		}
 	}
 
