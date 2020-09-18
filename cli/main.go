@@ -222,9 +222,10 @@ func cmdAuth(c *cli.Context) error {
 		}
 
 		if len(settings.Ip) == 0 {
-			// Probe the ac_id parameter, required by wireless network
+			// Probe the ac_id parameter
 			// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
-			if retAcID, err := libauth.GetAcID(); err == nil {
+			// For v6, ac_id must be probed using different url
+			if retAcID, err := libauth.GetAcID(settings.V6); err == nil {
 				acID = retAcID
 			}
 		}
@@ -346,7 +347,7 @@ func main() {
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.6",
+		Version:  "1.6.2",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -397,6 +398,7 @@ func main() {
 		Authors: []cli.Author{
 			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
 			{Name: "Nogeek", Email: "ritou11@gmail.com"},
+			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
 		},
 	}
 

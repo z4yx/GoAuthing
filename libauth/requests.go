@@ -190,7 +190,7 @@ func GetNasID(IP, user, password string) (nasID string, err error) {
 	return
 }
 
-func GetAcID() (acID string, err error) {
+func GetAcID(V6 bool) (acID string, err error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -202,6 +202,9 @@ func GetAcID() (acID string, err error) {
 	var resp *http.Response
 	var body []byte
 	url := "http://net.tsinghua.edu.cn/"
+	if V6 {
+		url = "http://mirrors6.tuna.tsinghua.edu.cn/"
+	} 
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err = netClient.Get(url)
 	if err != nil {
