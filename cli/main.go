@@ -232,7 +232,8 @@ func cmdAuth(c *cli.Context) error {
 	}
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
 	if len(settings.Ip) == 0 && !settings.NoCheck {
-		online, _ := libauth.IsOnline(host, acID)
+		online, _, username := libauth.IsOnline(host, acID)
+		settings.Username = username
 		if online && !logout {
 			fmt.Println("Currently online!")
 			return nil
@@ -315,10 +316,10 @@ func cmdLogout(c *cli.Context) error {
 	} else {
 		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
 	}
-	err := requestUser()
-	if err != nil {
-		return err
-	}
+	//err := requestUser()
+	//if err != nil {
+	//	return err
+	//}
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
 	if success {
 		fmt.Printf("Logout Successfully!\n")
