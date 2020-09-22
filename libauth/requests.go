@@ -100,13 +100,20 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 	return extractJSONFromJSONP(string(body), CB)
 }
 
-func IsOnline(host *UrlProvider, acID string) (online bool, err error) {
+func IsOnline(host *UrlProvider, acID string) (online bool, err error, username string) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
 			if strings.Index(req.URL.Path, "succeed_wired.php") != -1 {
 				online = true
+				regexUsername := regexp.MustCompile(`username=([-a-zA-Z0-9]+)`)
+				matches := regexUsername.FindStringSubmatch(req.URL.RawQuery)
+				if len(matches) > 0 {
+					username = matches[1]
+					logger.Debugf("username=%s\n", username)
+				}
+
 			}
 			return nil
 		},
@@ -190,7 +197,7 @@ func GetNasID(IP, user, password string) (nasID string, err error) {
 	return
 }
 
-func GetAcID() (acID string, err error) {
+func GetAcID(V6 bool) (acID string, err error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -202,6 +209,9 @@ func GetAcID() (acID string, err error) {
 	var resp *http.Response
 	var body []byte
 	url := "http://net.tsinghua.edu.cn/"
+	if V6 {
+		url = "http://mirrors6.tuna.tsinghua.edu.cn/"
+	} 
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err = netClient.Get(url)
 	if err != nil {
