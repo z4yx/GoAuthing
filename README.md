@@ -21,34 +21,48 @@ NAME:
 USAGE:
    auth-thu [options]
    auth-thu [options] auth [auth_options]
+   auth-thu [options] deauth [auth_options]
    auth-thu [options] login
    auth-thu [options] logout
+   auth-thu [options] onlien [online_options]
 
 VERSION:
-
-   1.4
+   1.9
 
 AUTHORS:
-  Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
-  Nogeek <ritou11@gmail.com>
+   Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
+   Nogeek <ritou11@gmail.com>
+   ZenithalHourlyRate <i@zenithal.me>
 
 COMMANDS:
      auth    (default) Auth via auth4/6.tsinghua
        OPTIONS:
-           --ip value      authenticating for specified IP address
-           --no-check, -n  skip online checking, always send login request
-           --logout, -o    log out of the online account
-           --ipv6, -6      authenticating for IPv6 (auth6.tsinghua)
-           --host value    use customized hostname of srun4000
-           --insecure      use http instead of https
+         --ip value         authenticating for specified IP address
+         --no-check, -n     skip online checking, always send login request
+         --logout, -o       de-auth of the online account (for compatibility)
+         --ipv6, -6         authenticating for IPv6 (auth6.tsinghua)
+         --host value       use customized hostname of srun4000
+         --insecure         use http instead of https
+         --keep-online, -k  keep online after login
+     deauth  De-auth via auth4/6.tsinghua
+       OPTIONS:
+         --ip value      authenticating for specified IP address
+         --no-check, -n  skip online checking, always send logout request
+         --ipv6, -6      authenticating for IPv6 (auth6.tsinghua)
+         --host value    use customized hostname of srun4000
+         --insecure      use http instead of https
      login   Login via net.tsinghua
      logout  Logout via net.tsinghua
+     online  Keep your computer online
+       OPTIONS:
+         --auth, -a  keep the Auth online only
 
 GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
    --password password, -p password  your TUNET password
    --config-file path, -c path       path to your config file, default ~/.auth-thu
    --hook-success value              command line to be executed in shell after successful login/out
+   --daemonize, -D                   run without reading username/password from standard input
    --debug                           print debug messages
    --help, -h                        print the help
    --version, -v                     print the version
@@ -66,11 +80,20 @@ The default location of config file is `~/.auth-thu`.
   "debug": false,
   "useV6": false,
   "noCheck": false,
-  "insecure": false
+  "insecure": false,
+  "daemonize": false
 }
 ```
 
 To configure automatic authentication on systemd based Linux distro, take a look at `docs` folder. Just modify the path in configure files, then copy them to `/etc/systemd/system` folder.
+
+Note that the program should have access to the configure file. For `goauthing.service`, since it is run as `nobody`, `/etc/goauthing.json` can not be read by it, hence you can use the following command to enable access.
+
+```
+setfacl -m u:nobody:r /etc/goauthing.json
+```
+
+Or, to be more secure, you can choose `goauthing@.service` and store the config in `~/.auth-thu`.
 
 ## Build
 

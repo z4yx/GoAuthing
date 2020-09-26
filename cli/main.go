@@ -381,7 +381,8 @@ func main() {
 	 auth-thu [options] auth [auth_options]
 	 auth-thu [options] deauth [auth_options]
 	 auth-thu [options] login
-	 auth-thu [options] logout`,
+	 auth-thu [options] logout
+	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
 		Version:  "1.9",
 		HideHelp: true,
