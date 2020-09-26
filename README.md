@@ -24,7 +24,7 @@ USAGE:
    auth-thu [options] deauth [auth_options]
    auth-thu [options] login
    auth-thu [options] logout
-   auth-thu [options] onlien [online_options]
+   auth-thu [options] online [online_options]
 
 VERSION:
    1.9
@@ -39,7 +39,7 @@ COMMANDS:
        OPTIONS:
          --ip value         authenticating for specified IP address
          --no-check, -n     skip online checking, always send login request
-         --logout, -o       de-auth of the online account (for compatibility)
+         --logout, -o       de-auth of the online account (behaves the same as deauth command, for backward-compatibility)
          --ipv6, -6         authenticating for IPv6 (auth6.tsinghua)
          --host value       use customized hostname of srun4000
          --insecure         use http instead of https
