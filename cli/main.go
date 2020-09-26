@@ -268,7 +268,9 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
 	if len(settings.Ip) == 0 && !settings.NoCheck {
 		online, _, username := libauth.IsOnline(host, acID)
-		settings.Username = username
+		if logout && online {
+			settings.Username = username
+		}
 		if online && !logout {
 			fmt.Println("Currently online!")
 			return nil
