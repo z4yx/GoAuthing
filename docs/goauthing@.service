@@ -2,10 +2,11 @@
 Description=Authenticating utility for auth.tsinghua.edu.cn
 
 [Service]
-ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D
+# default config is in ~/.auth-thu
+ExecStart=/usr/local/bin/auth-thu -D
 Type=oneshot
 StandardOutput=journal
-User=nobody
+User=%i
 
 
 [Install]

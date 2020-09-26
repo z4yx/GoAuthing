@@ -95,6 +95,8 @@ setfacl -m u:nobody:r /etc/goauthing.json
 
 Or, to be more secure, you can choose `goauthing@.service` and store the config in `~/.auth-thu`.
 
+For other authentication like IPv6, you can copy these service files and modify them correspondingly.
+
 ## Build
 
 Requires Go 1.11 or above

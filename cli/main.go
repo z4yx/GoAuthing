@@ -149,7 +149,8 @@ func parseSettings(c *cli.Context) (err error) {
 	if len(cf) == 0 {
 		homedir, _ := os.UserHomeDir()
 		cf = path.Join(homedir, ".auth-thu")
-		err = parseSettingsFile(cf, false)
+		// If run in daemon mode, config file is a must
+		err = parseSettingsFile(cf, c.GlobalBool("daemonize"))
 	} else {
 		err = parseSettingsFile(cf, true)
 	}
