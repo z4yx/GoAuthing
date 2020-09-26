@@ -38,11 +38,17 @@ type Settings struct {
 var logger = loggo.GetLogger("")
 var settings Settings
 
-func parseSettingsFile(path string) error {
+func parseSettingsFile(path string, important bool) error {
 	sf, err := os.Open(path)
 	if err != nil {
+		if important {
+			logger.Errorf("Read config file \"%s\" failed (may be existence or access problem)", path)
+		} else {
+			logger.Debugf("Read config file \"%s\" failed (may be existence or access problem)", path)
+		}
 		return err
 	}
+	logger.Debugf("Read config file \"%s\" succeeded", path)
 	defer sf.Close()
 	bv, _ := ioutil.ReadAll(sf)
 	json.Unmarshal(bv, &settings)
@@ -111,17 +117,31 @@ func requestPasswd() (err error) {
 	return
 }
 
+func setLoggerLevel(debug bool) {
+	if debug {
+		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG;libauth=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO;libauth=INFO")
+	}
+}
+
 func parseSettings(c *cli.Context) error {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
+    // Early debug flag setting (have debug messages when access config file)
+	setLoggerLevel(c.GlobalBool("debug"))
 	cf := c.GlobalString("config-file")
 	if len(cf) == 0 {
 		homedir, _ := os.UserHomeDir()
 		cf = path.Join(homedir, ".auth-thu")
+		parseSettingsFile(cf, false)
+	} else {
+		parseSettingsFile(cf, true)
 	}
-	parseSettingsFile(cf)
 	mergeCliSettings(c)
+    // Late debug flag setting
+	setLoggerLevel(settings.Debug)
 	return nil
 }
 
@@ -208,11 +228,6 @@ func cmdAuth(c *cli.Context) error {
 	parseSettings(c)
 	logout := c.Bool("logout")
 	acID := "1"
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
-	}
 	domain := settings.Host
 	if len(settings.Host) == 0 {
 		if settings.V6 {
@@ -283,11 +298,6 @@ func cmdAuth(c *cli.Context) error {
 
 func cmdLogin(c *cli.Context) error {
 	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
-	}
 	err := requestUser()
 	if err != nil {
 		return err
@@ -311,11 +321,6 @@ func cmdLogin(c *cli.Context) error {
 
 func cmdLogout(c *cli.Context) error {
 	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
-	}
 	//err := requestUser()
 	//if err != nil {
 	//	return err
@@ -332,11 +337,6 @@ func cmdLogout(c *cli.Context) error {
 
 func cmdKeepalive(c *cli.Context) error {
 	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO")
-	}
 	return keepAliveLoop(c, c.Bool("auth"))
 }
 
@@ -348,7 +348,7 @@ func main() {
 	 auth-thu [options] login
 	 auth-thu [options] logout`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.7",
+		Version:  "1.8",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
