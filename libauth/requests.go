@@ -111,7 +111,7 @@ func IsOnline(host *UrlProvider, acID string) (online bool, err error, username 
 				matches := regexUsername.FindStringSubmatch(req.URL.RawQuery)
 				if len(matches) > 0 {
 					username = matches[1]
-					logger.Debugf("username=%s\n", username)
+					logger.Debugf("Extracted username: \"%s\"\n", username)
 				}
 
 			}

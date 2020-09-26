@@ -32,17 +32,26 @@ type Settings struct {
 	KeepOn   bool   `json:"keepOnline"`
 	V6       bool   `json:"useV6"`
 	Insecure bool   `json:"insecure"`
+	Daemon   bool   `json:"daemonize"`
 	Debug    bool   `json:"debug"`
 }
 
-var logger = loggo.GetLogger("")
+var logger = loggo.GetLogger("auth-thu")
 var settings Settings
 
-func parseSettingsFile(path string) error {
+func parseSettingsFile(path string, important bool) error {
 	sf, err := os.Open(path)
 	if err != nil {
-		return err
+		if important {
+			logger.Errorf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
+			err = cli.NewExitError("Read config file failed", 1)
+			return err
+		} else {
+			logger.Debugf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
+			return nil
+		}
 	}
+	logger.Debugf("Read config file \"%s\" succeeded\n", path)
 	defer sf.Close()
 	bv, _ := ioutil.ReadAll(sf)
 	json.Unmarshal(bv, &settings)
@@ -75,13 +84,24 @@ func mergeCliSettings(c *cli.Context) error {
 	merged.V6 = settings.V6 || c.Bool("ipv6")
 	merged.KeepOn = settings.KeepOn || c.Bool("keep-online")
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
+	merged.Daemon = settings.Daemon || c.GlobalBool("daemonize")
 	merged.Debug = settings.Debug || c.GlobalBool("debug")
 	settings = merged
+	logger.Debugf("Settings Username: \"%s\"\n", settings.Username)
+	logger.Debugf("Settings Ip: \"%s\"\n", settings.Ip)
+	logger.Debugf("Settings Host: \"%s\"\n", settings.Host)
+	logger.Debugf("Settings HookSucc: \"%s\"\n", settings.HookSucc)
+	logger.Debugf("Settings NoCheck: %t\n", settings.NoCheck)
+	logger.Debugf("Settings V6: %t\n", settings.V6)
+	logger.Debugf("Settings KeepOn: %t\n", settings.KeepOn)
+	logger.Debugf("Settings Insecure: %t\n", settings.Insecure)
+	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
+	logger.Debugf("Settings Debug: %t\n", settings.Debug)
 	return nil
 }
 
 func requestUser() (err error) {
-	if len(settings.Username) == 0 {
+	if len(settings.Username) == 0 && !settings.Daemon {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Username: ")
 		settings.Username, _ = reader.ReadString('\n')
@@ -94,7 +114,7 @@ func requestUser() (err error) {
 }
 
 func requestPasswd() (err error) {
-	if len(settings.Password) == 0 {
+	if len(settings.Password) == 0 && !settings.Daemon {
 		var b []byte
 		fmt.Printf("Password: ")
 		b, err = gopass.GetPasswdMasked()
@@ -111,18 +131,36 @@ func requestPasswd() (err error) {
 	return
 }
 
-func parseSettings(c *cli.Context) error {
+func setLoggerLevel(debug bool) {
+	if debug {
+		loggo.ConfigureLoggers("auth-thu=DEBUG;libtunet=DEBUG;libauth=DEBUG")
+	} else {
+		loggo.ConfigureLoggers("auth-thu=INFO;libtunet=INFO;libauth=INFO")
+	}
+}
+
+func parseSettings(c *cli.Context) (err error) {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
+	// Early debug flag setting (have debug messages when access config file)
+	setLoggerLevel(c.GlobalBool("debug"))
 	cf := c.GlobalString("config-file")
 	if len(cf) == 0 {
 		homedir, _ := os.UserHomeDir()
 		cf = path.Join(homedir, ".auth-thu")
+		// If run in daemon mode, config file is a must
+		err = parseSettingsFile(cf, c.GlobalBool("daemonize"))
+	} else {
+		err = parseSettingsFile(cf, true)
 	}
-	parseSettingsFile(cf)
+	if err != nil {
+		return
+	}
 	mergeCliSettings(c)
-	return nil
+	// Late debug flag setting
+	setLoggerLevel(settings.Debug)
+	return
 }
 
 func runHook(c *cli.Context) {
@@ -204,15 +242,12 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 	return
 }
 
-func cmdAuth(c *cli.Context) error {
-	parseSettings(c)
-	logout := c.Bool("logout")
-	acID := "1"
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libauth=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libauth=INFO")
+func cmdAuthUtil(c *cli.Context, logout bool) error {
+	err := parseSettings(c)
+	if err != nil {
+		return err
 	}
+	acID := "1"
 	domain := settings.Host
 	if len(settings.Host) == 0 {
 		if settings.V6 {
@@ -233,7 +268,9 @@ func cmdAuth(c *cli.Context) error {
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
 	if len(settings.Ip) == 0 && !settings.NoCheck {
 		online, _, username := libauth.IsOnline(host, acID)
-		settings.Username = username
+		if logout && online {
+			settings.Username = username
+		}
 		if online && !logout {
 			fmt.Println("Currently online!")
 			return nil
@@ -242,7 +279,7 @@ func cmdAuth(c *cli.Context) error {
 			return nil
 		}
 	}
-	err := requestUser()
+	err = requestUser()
 	if err != nil {
 		return err
 	}
@@ -281,14 +318,21 @@ func cmdAuth(c *cli.Context) error {
 	return nil
 }
 
+func cmdAuth(c *cli.Context) error {
+	logout := c.Bool("logout")
+	return cmdAuthUtil(c, logout)
+}
+
+func cmdDeauth(c *cli.Context) error {
+	return cmdAuthUtil(c, true)
+}
+
 func cmdLogin(c *cli.Context) error {
-	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
+	err := parseSettings(c)
+	if err != nil {
+		return err
 	}
-	err := requestUser()
+	err = requestUser()
 	if err != nil {
 		return err
 	}
@@ -310,16 +354,11 @@ func cmdLogin(c *cli.Context) error {
 }
 
 func cmdLogout(c *cli.Context) error {
-	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG;libtunet=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO;libtunet=INFO")
+	err := parseSettings(c)
+	if err != nil {
+		return err
 	}
 	//err := requestUser()
-	//if err != nil {
-	//	return err
-	//}
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
 	if success {
 		fmt.Printf("Logout Successfully!\n")
@@ -331,11 +370,9 @@ func cmdLogout(c *cli.Context) error {
 }
 
 func cmdKeepalive(c *cli.Context) error {
-	parseSettings(c)
-	if settings.Debug {
-		loggo.ConfigureLoggers("<root>=DEBUG")
-	} else {
-		loggo.ConfigureLoggers("<root>=INFO")
+	err := parseSettings(c)
+	if err != nil {
+		return err
 	}
 	return keepAliveLoop(c, c.Bool("auth"))
 }
@@ -345,16 +382,19 @@ func main() {
 		Name: "auth-thu",
 		UsageText: `auth-thu [options]
 	 auth-thu [options] auth [auth_options]
+	 auth-thu [options] deauth [auth_options]
 	 auth-thu [options] login
-	 auth-thu [options] logout`,
+	 auth-thu [options] logout
+	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.7",
+		Version:  "1.9.3",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
+			&cli.BoolFlag{Name: "daemonize, D", Usage: "run without reading username/password from standard input"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 		},
@@ -365,7 +405,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
 					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
-					&cli.BoolFlag{Name: "logout, o", Usage: "log out of the online account"},
+					&cli.BoolFlag{Name: "logout, o", Usage: "de-auth of the online account (behaves the same as deauth command, for backward-compatibility)"},
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
@@ -373,6 +413,19 @@ func main() {
 				},
 				Action: cmdAuth,
 			},
+			cli.Command{
+				Name:  "deauth",
+				Usage: "De-auth via auth4/6.tsinghua",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
+					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send logout request"},
+					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
+					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
+				},
+				Action: cmdDeauth,
+			},
+
 			cli.Command{
 				Name:  "login",
 				Usage: "Login via net.tsinghua",
