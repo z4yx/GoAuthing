@@ -260,9 +260,14 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 			// Probe the ac_id parameter
 			// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
 			// For v6, ac_id must be probed using different url
-			if retAcID, err := libauth.GetAcID(settings.V6); err == nil {
-				acID = retAcID
+			retAcID, err := libauth.GetAcID(settings.V6)
+			// FIXME: currently when logout, the GetAcID is actually broken.
+			// Though logout does not require correct ac_id now, it can break.
+			if err != nil && !logout {
+				logger.Warningf("Failed to get ac_id: %v", err)
+				logger.Warningf("Login may fail with 'IP地址异常'.")
 			}
+			acID = retAcID
 		}
 	}
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
@@ -297,12 +302,12 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		}
 	}
 
-	success, err := libauth.LoginLogout(settings.Username, settings.Password, host, logout, settings.Ip, acID)
+	err = libauth.LoginLogout(settings.Username, settings.Password, host, logout, settings.Ip, acID)
 	action := "Login"
 	if logout {
 		action = "Logout"
 	}
-	if success {
+	if err == nil {
 		fmt.Printf("%s Successfully!\n", action)
 		runHook(c)
 		if settings.KeepOn {
@@ -313,9 +318,9 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 			}
 		}
 	} else {
-		fmt.Printf("%s Failed: %s\n", action, err.Error())
+		fmt.Printf("%s Failed: %v\n", action, err)
 	}
-	return nil
+	return err
 }
 
 func cmdAuth(c *cli.Context) error {
