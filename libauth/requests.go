@@ -46,9 +46,6 @@ func buildLoginParams(username, password, token string, logout bool, anotherIP s
 	hmd5 := fmt.Sprintf("%032x", md5.Sum([]byte(password)))
 
 	action := "login"
-	if logout {
-		action = "logout"
-	}
 	rawInfo := map[string]string{
 		"username": username,
 		"password": password,
@@ -56,8 +53,13 @@ func buildLoginParams(username, password, token string, logout bool, anotherIP s
 		"acid":     acID,
 		"enc_ver":  "s" + "run" + "_bx1",
 	}
+	if logout {
+		action = "logout"
+		delete(rawInfo, "password")
+	}
 	infoJSON, _ := json.Marshal(rawInfo)
 	// fmt.Printf("infoJSON: %s\n", infoJSON)
+
 	loginParams = url.Values{
 		"action":       []string{action},
 		"ac_id":        []string{acID},
@@ -66,7 +68,9 @@ func buildLoginParams(username, password, token string, logout bool, anotherIP s
 		"ip":           []string{ip},
 		"double_stack": []string{"1"},
 		"username":     []string{username},
-		"password":     []string{"{MD5}" + hmd5},
+	}
+	if !logout {
+		loginParams.Add("password", "{MD5}"+hmd5)
 	}
 	encoded := XEncode(string(infoJSON), token)
 	if encoded == nil {
@@ -75,7 +79,11 @@ func buildLoginParams(username, password, token string, logout bool, anotherIP s
 	}
 	loginParams.Add("info", "{SRBX1}"+QuirkBase64Encode(*encoded))
 	// fmt.Printf("chksum(raw): %v\n", token+username+token + hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info"))
-	loginParams.Add("chksum", sha1sum(token+username+token+hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info")))
+	if logout {
+		loginParams.Add("chksum", sha1sum(token+username+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info")))
+	} else {
+		loginParams.Add("chksum", sha1sum(token+username+token+hmd5+token+acID+token+ip+token+loginParams.Get("n")+token+loginParams.Get("type")+token+loginParams.Get("info")))
+	}
 	// fmt.Printf("loginParams: %v\n", loginParams)
 	return
 }
@@ -211,7 +219,7 @@ func GetAcID(V6 bool) (acID string, err error) {
 	url := "http://net.tsinghua.edu.cn/"
 	if V6 {
 		url = "http://mirrors6.tuna.tsinghua.edu.cn/"
-	} 
+	}
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err = netClient.Get(url)
 	if err != nil {
@@ -233,8 +241,7 @@ func GetAcID(V6 bool) (acID string, err error) {
 	return
 }
 
-func LoginLogout(username, password string, host *UrlProvider, logout bool, anotherIP string, acID string) (success bool, err error) {
-	success = false
+func LoginLogout(username, password string, host *UrlProvider, logout bool, anotherIP string, acID string) (err error) {
 	logger.Debugf("Getting challenge...\n")
 	body, err := GetJSON(host.ChallengeUriBase(), buildChallengeParams(username, anotherIP))
 	if err != nil {
@@ -280,7 +287,6 @@ func LoginLogout(username, password string, host *UrlProvider, logout bool, anot
 	}
 
 	if res == "ok" {
-		success = true
 		err = nil
 	} else {
 		ecode, _ := loginResp["ecode"].(string)
