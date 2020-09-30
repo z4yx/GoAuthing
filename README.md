@@ -75,7 +75,7 @@ The default location of config file is `~/.auth-thu`.
 {
   "username": "your-username",
   "password": "your-password",
-  "host": "auth4.tsinghua.edu.cn",
+  "host": "",
   "ip": "166.xxx.xx.xx",
   "debug": false,
   "useV6": false,
@@ -84,6 +84,8 @@ The default location of config file is `~/.auth-thu`.
   "daemonize": false
 }
 ```
+
+Unless you have special need, you can only have `username` and `password` field in your config file. For `host`, the default value defined in code should be sufficient hence there should be no need to fill it. `UseV6` automatically determine the `host` to use. For `ip`, unless you are auth/login the other boxes you have(not the box `auth-thu` is running on), you can leave it blank. Other options are self-explanatory.
 
 To configure automatic authentication on systemd based Linux distro, take a look at `docs` folder. Just modify the path in configure files, then copy them to `/etc/systemd/system` folder.
 

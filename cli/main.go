@@ -255,21 +255,22 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		} else {
 			domain = "auth4.tsinghua.edu.cn"
 		}
-
-		if len(settings.Ip) == 0 {
-			// Probe the ac_id parameter
-			// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
-			// For v6, ac_id must be probed using different url
-			retAcID, err := libauth.GetAcID(settings.V6)
-			// FIXME: currently when logout, the GetAcID is actually broken.
-			// Though logout does not require correct ac_id now, it can break.
-			if err != nil && !logout {
-				logger.Warningf("Failed to get ac_id: %v", err)
-				logger.Warningf("Login may fail with 'IP地址异常'.")
-			}
-			acID = retAcID
-		}
 	}
+
+	if len(settings.Ip) == 0 {
+		// Probe the ac_id parameter
+		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
+		// For v6, ac_id must be probed using different url
+		retAcID, err := libauth.GetAcID(settings.V6)
+		// FIXME: currently when logout, the GetAcID is actually broken.
+		// Though logout does not require correct ac_id now, it can break.
+		if err != nil && !logout {
+			logger.Warningf("Failed to get ac_id: %v", err)
+			logger.Warningf("Login may fail with 'IP地址异常'.")
+		}
+		acID = retAcID
+	}
+
 	host := libauth.NewUrlProvider(domain, settings.Insecure)
 	if len(settings.Ip) == 0 && !settings.NoCheck {
 		online, _, username := libauth.IsOnline(host, acID)
@@ -392,7 +393,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.9.5",
+		Version:  "1.9.6",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
