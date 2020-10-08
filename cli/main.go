@@ -303,6 +303,10 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		}
 	}
 
+	if c.Bool("campus-only") {
+		settings.Username += "@tsinghua"
+	}
+
 	err = libauth.LoginLogout(settings.Username, settings.Password, host, logout, settings.Ip, acID)
 	action := "Login"
 	if logout {
@@ -393,7 +397,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.9.6",
+		Version:  "1.9.7",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -413,6 +417,7 @@ func main() {
 					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
 					&cli.BoolFlag{Name: "logout, o", Usage: "de-auth of the online account (behaves the same as deauth command, for backward-compatibility)"},
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+					&cli.BoolFlag{Name: "campus-only, C", Usage: "auth only, no auto-login (v4 only)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
