@@ -104,7 +104,11 @@ func mergeCliSettings(c *cli.Context) error {
 	logger.Debugf("Settings Insecure: %t\n", settings.Insecure)
 	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
-	logger.Debugf("Settings AcID: %d\n", *settings.AcID)
+	if settings.AcID != nil {
+		logger.Debugf("Settings AcID: %d\n", *settings.AcID)
+	} else {
+		logger.Debugf("Settings AcID: unspecified\n")
+	}
 	return nil
 }
 
@@ -445,6 +449,7 @@ func main() {
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
+					&cli.IntFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdDeauth,
 			},
