@@ -412,7 +412,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "1.9.7",
+		Version:  "2.0.0",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -481,6 +481,7 @@ func main() {
 			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
 			{Name: "Nogeek", Email: "ritou11@gmail.com"},
 			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
+			{Name: "Jiajie Chen", Email: "c@jia.je"},
 		},
 	}
 

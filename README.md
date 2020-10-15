@@ -27,12 +27,13 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   1.9
+   2.0.0
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
    Nogeek <ritou11@gmail.com>
    ZenithalHourlyRate <i@zenithal.me>
+   Jiajie Chen <c@jia.je>
 
 COMMANDS:
      auth    (default) Auth via auth4/6.tsinghua
@@ -44,6 +45,7 @@ COMMANDS:
          --host value       use customized hostname of srun4000
          --insecure         use http instead of https
          --keep-online, -k  keep online after login
+         --ac-id value      use specified ac_id (default: 0)
      deauth  De-auth via auth4/6.tsinghua
        OPTIONS:
          --ip value      authenticating for specified IP address
@@ -51,6 +53,7 @@ COMMANDS:
          --ipv6, -6      authenticating for IPv6 (auth6.tsinghua)
          --host value    use customized hostname of srun4000
          --insecure      use http instead of https
+         --ac-id value   use specified ac_id (default: 0)
      login   Login via net.tsinghua
      logout  Logout via net.tsinghua
      online  Keep your computer online
