@@ -34,7 +34,7 @@ type Settings struct {
 	Insecure bool   `json:"insecure"`
 	Daemon   bool   `json:"daemonize"`
 	Debug    bool   `json:"debug"`
-	AcID     int    `json:"acId"`
+	AcID     *int   `json:"acId"`
 }
 
 var logger = loggo.GetLogger("auth-thu")
@@ -88,8 +88,10 @@ func mergeCliSettings(c *cli.Context) error {
 	merged.Daemon = settings.Daemon || c.GlobalBool("daemonize")
 	merged.Debug = settings.Debug || c.GlobalBool("debug")
 	merged.AcID = settings.AcID
-	if merged.AcID == 0 {
-		merged.AcID = c.Int("ac-id")
+	if c.IsSet("ac-id") {
+		// command line flag takes precedence
+		var acID int = c.Int("ac-id")
+		merged.AcID = &acID
 	}
 	settings = merged
 	logger.Debugf("Settings Username: \"%s\"\n", settings.Username)
@@ -102,7 +104,7 @@ func mergeCliSettings(c *cli.Context) error {
 	logger.Debugf("Settings Insecure: %t\n", settings.Insecure)
 	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
-	logger.Debugf("Settings AcID: %d\n", settings.AcID)
+	logger.Debugf("Settings AcID: %d\n", *settings.AcID)
 	return nil
 }
 
@@ -254,8 +256,8 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		return err
 	}
 	acID := "1"
-	if settings.AcID != 0 {
-		acID = fmt.Sprint(settings.AcID)
+	if settings.AcID != nil {
+		acID = fmt.Sprint(*settings.AcID)
 	}
 	domain := settings.Host
 	if len(settings.Host) == 0 {
@@ -266,7 +268,7 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		}
 	}
 
-	if len(settings.Ip) == 0 && settings.AcID == 0 {
+	if len(settings.Ip) == 0 && settings.AcID == nil {
 		// Probe the ac_id parameter
 		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
 		// For v6, ac_id must be probed using different url
@@ -303,7 +305,7 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		if err != nil {
 			return err
 		}
-		if len(settings.Ip) != 0 && len(settings.Host) == 0 && settings.AcID == 0 {
+		if len(settings.Ip) != 0 && len(settings.Host) == 0 && settings.AcID == nil {
 			// Auth for another IP requires correct NAS ID since July 2020
 			// Tsinghua only
 			if retNasID, err := libauth.GetNasID(settings.Ip, settings.Username, settings.Password); err == nil {
