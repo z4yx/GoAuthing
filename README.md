@@ -27,7 +27,7 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.0.0
+   2.0.1
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -87,7 +87,8 @@ The default location of config file is `~/.auth-thu`.
   "noCheck": false,
   "insecure": false,
   "daemonize": false,
-  "acId": ""
+  "acId": "",
+  "campusOnly": false
 }
 ```
 
