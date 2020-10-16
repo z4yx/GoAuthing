@@ -45,7 +45,7 @@ COMMANDS:
          --host value       use customized hostname of srun4000
          --insecure         use http instead of https
          --keep-online, -k  keep online after login
-         --ac-id value      use specified ac_id (default: 0)
+         --ac-id value      use specified ac_id
      deauth  De-auth via auth4/6.tsinghua
        OPTIONS:
          --ip value      authenticating for specified IP address
@@ -53,7 +53,7 @@ COMMANDS:
          --ipv6, -6      authenticating for IPv6 (auth6.tsinghua)
          --host value    use customized hostname of srun4000
          --insecure      use http instead of https
-         --ac-id value   use specified ac_id (default: 0)
+         --ac-id value   use specified ac_id
      login   Login via net.tsinghua
      logout  Logout via net.tsinghua
      online  Keep your computer online
@@ -84,11 +84,12 @@ The default location of config file is `~/.auth-thu`.
   "useV6": false,
   "noCheck": false,
   "insecure": false,
-  "daemonize": false
+  "daemonize": false,
+  "acId": ""
 }
 ```
 
-Unless you have special need, you can only have `username` and `password` field in your config file. For `host`, the default value defined in code should be sufficient hence there should be no need to fill it. `UseV6` automatically determine the `host` to use. For `ip`, unless you are auth/login the other boxes you have(not the box `auth-thu` is running on), you can leave it blank. Other options are self-explanatory.
+Unless you have special need, you can only have `username` and `password` field in your config file. For `host`, the default value defined in code should be sufficient hence there should be no need to fill it. `UseV6` automatically determine the `host` to use. For `ip`, unless you are auth/login the other boxes you have(not the box `auth-thu` is running on), you can leave it blank. For those boxes unable to get correct acid themselves, we can specify the acid for them by using `acId`. Other options are self-explanatory.
 
 To configure automatic authentication on systemd based Linux distro, take a look at `docs` folder. Just modify the path in configure files, then copy them to `/etc/systemd/system` folder.
 

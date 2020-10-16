@@ -34,7 +34,7 @@ type Settings struct {
 	Insecure bool   `json:"insecure"`
 	Daemon   bool   `json:"daemonize"`
 	Debug    bool   `json:"debug"`
-	AcID     *int   `json:"acId"`
+	AcID     string `json:"acId"`
 }
 
 var logger = loggo.GetLogger("auth-thu")
@@ -87,11 +87,9 @@ func mergeCliSettings(c *cli.Context) error {
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
 	merged.Daemon = settings.Daemon || c.GlobalBool("daemonize")
 	merged.Debug = settings.Debug || c.GlobalBool("debug")
-	merged.AcID = settings.AcID
-	if c.IsSet("ac-id") {
-		// command line flag takes precedence
-		var acID int = c.Int("ac-id")
-		merged.AcID = &acID
+	merged.AcID = c.String("ac-id")
+	if len(merged.AcID) == 0 {
+		merged.AcID = settings.AcID
 	}
 	settings = merged
 	logger.Debugf("Settings Username: \"%s\"\n", settings.Username)
@@ -104,11 +102,7 @@ func mergeCliSettings(c *cli.Context) error {
 	logger.Debugf("Settings Insecure: %t\n", settings.Insecure)
 	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
-	if settings.AcID != nil {
-		logger.Debugf("Settings AcID: %d\n", *settings.AcID)
-	} else {
-		logger.Debugf("Settings AcID: unspecified\n")
-	}
+	logger.Debugf("Settings AcID: \"%s\"\n", settings.AcID)
 	return nil
 }
 
@@ -260,8 +254,8 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		return err
 	}
 	acID := "1"
-	if settings.AcID != nil {
-		acID = fmt.Sprint(*settings.AcID)
+	if len(settings.AcID) != 0 {
+		acID = settings.AcID
 	}
 	domain := settings.Host
 	if len(settings.Host) == 0 {
@@ -272,7 +266,7 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		}
 	}
 
-	if len(settings.Ip) == 0 && settings.AcID == nil {
+	if len(settings.Ip) == 0 && len(settings.AcID) == 0 {
 		// Probe the ac_id parameter
 		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
 		// For v6, ac_id must be probed using different url
@@ -309,7 +303,7 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		if err != nil {
 			return err
 		}
-		if len(settings.Ip) != 0 && len(settings.Host) == 0 && settings.AcID == nil {
+		if len(settings.Ip) != 0 && len(settings.Host) == 0 && len(settings.AcID) == 0 {
 			// Auth for another IP requires correct NAS ID since July 2020
 			// Tsinghua only
 			if retNasID, err := libauth.GetNasID(settings.Ip, settings.Username, settings.Password); err == nil {
@@ -436,7 +430,7 @@ func main() {
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
-					&cli.IntFlag{Name: "ac-id", Usage: "use specified ac_id"},
+					&cli.StringFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdAuth,
 			},
@@ -449,7 +443,7 @@ func main() {
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
-					&cli.IntFlag{Name: "ac-id", Usage: "use specified ac_id"},
+					&cli.StringFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdDeauth,
 			},
