@@ -34,6 +34,7 @@ AUTHORS:
    Nogeek <ritou11@gmail.com>
    ZenithalHourlyRate <i@zenithal.me>
    Jiajie Chen <c@jia.je>
+   KomeijiOcean <oceans2000@126.com>
 
 COMMANDS:
      auth    (default) Auth via auth4/6.tsinghua
@@ -42,6 +43,7 @@ COMMANDS:
          --no-check, -n     skip online checking, always send login request
          --logout, -o       de-auth of the online account (behaves the same as deauth command, for backward-compatibility)
          --ipv6, -6         authenticating for IPv6 (auth6.tsinghua)
+         --campus-only, -C  auth only, no auto-login (v4 only)
          --host value       use customized hostname of srun4000
          --insecure         use http instead of https
          --keep-online, -k  keep online after login

@@ -476,6 +476,7 @@ func main() {
 			{Name: "Nogeek", Email: "ritou11@gmail.com"},
 			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
 			{Name: "Jiajie Chen", Email: "c@jia.je"},
+			{Name: "KomeijiOcean", Email: "oceans2000@126.com"},
 		},
 	}
 
