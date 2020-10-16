@@ -35,6 +35,7 @@ type Settings struct {
 	Daemon   bool   `json:"daemonize"`
 	Debug    bool   `json:"debug"`
 	AcID     string `json:"acId"`
+	Campus   bool   `json:"campusOnly"`
 }
 
 var logger = loggo.GetLogger("auth-thu")
@@ -91,6 +92,7 @@ func mergeCliSettings(c *cli.Context) error {
 	if len(merged.AcID) == 0 {
 		merged.AcID = settings.AcID
 	}
+	merged.Campus = settings.Campus || c.Bool("campus-only")
 	settings = merged
 	logger.Debugf("Settings Username: \"%s\"\n", settings.Username)
 	logger.Debugf("Settings Ip: \"%s\"\n", settings.Ip)
@@ -103,6 +105,7 @@ func mergeCliSettings(c *cli.Context) error {
 	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
 	logger.Debugf("Settings AcID: \"%s\"\n", settings.AcID)
+	logger.Debugf("Settings Campus: %t\n", settings.Campus)
 	return nil
 }
 
@@ -312,7 +315,7 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		}
 	}
 
-	if c.Bool("campus-only") {
+	if settings.Campus {
 		settings.Username += "@tsinghua"
 	}
 

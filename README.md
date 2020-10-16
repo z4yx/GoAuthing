@@ -87,7 +87,8 @@ The default location of config file is `~/.auth-thu`.
   "noCheck": false,
   "insecure": false,
   "daemonize": false,
-  "acId": ""
+  "acId": "",
+  "campusOnly": false
 }
 ```
 
