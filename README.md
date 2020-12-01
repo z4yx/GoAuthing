@@ -67,7 +67,7 @@ GLOBAL OPTIONS:
    --password password, -p password  your TUNET password
    --config-file path, -c path       path to your config file, default ~/.auth-thu
    --hook-success value              command line to be executed in shell after successful login/out
-   --daemonize, -D                   run without reading username/password from standard input
+   --daemonize, -D                   run without reading username/password from standard input; less log
    --debug                           print debug messages
    --help, -h                        print the help
    --version, -v                     print the version
@@ -105,6 +105,8 @@ setfacl -m u:nobody:r /etc/goauthing.json
 Or, to be more secure, you can choose `goauthing@.service` and store the config in `~/.auth-thu`.
 
 For other authentication like IPv6, you can copy these service files and modify them correspondingly.
+
+It is suggested that one configures and runs it manually first with `debug` flag turned on, which ensures the correctness of one's config, then start it as system service. For `daemonize` flag, it forces the program to only log errors, hence debugging should be done earlier and manually. `daemonize` is automatically turned on for system service (ref to associated systemd unit files).
 
 ## Build
 

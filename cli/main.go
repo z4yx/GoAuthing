@@ -140,8 +140,10 @@ func requestPasswd() (err error) {
 	return
 }
 
-func setLoggerLevel(debug bool) {
-	if debug {
+func setLoggerLevel(debug bool, daemon bool) {
+	if daemon {
+		loggo.ConfigureLoggers("auth-thu=ERROR;libtunet=ERROR;libauth=ERROR")
+	} else if debug {
 		loggo.ConfigureLoggers("auth-thu=DEBUG;libtunet=DEBUG;libauth=DEBUG")
 	} else {
 		loggo.ConfigureLoggers("auth-thu=INFO;libtunet=INFO;libauth=INFO")
@@ -153,7 +155,7 @@ func parseSettings(c *cli.Context) (err error) {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
 	// Early debug flag setting (have debug messages when access config file)
-	setLoggerLevel(c.GlobalBool("debug"))
+	setLoggerLevel(c.GlobalBool("debug"), c.GlobalBool("daemonize"))
 	cf := c.GlobalString("config-file")
 	if len(cf) == 0 {
 		homedir, _ := os.UserHomeDir()
@@ -168,7 +170,7 @@ func parseSettings(c *cli.Context) (err error) {
 	}
 	mergeCliSettings(c)
 	// Late debug flag setting
-	setLoggerLevel(settings.Debug)
+	setLoggerLevel(settings.Debug, settings.Daemon)
 	return
 }
 
@@ -183,7 +185,7 @@ func runHook(c *cli.Context) {
 }
 
 func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
-	fmt.Println("Accessing websites periodically to keep you online")
+	logger.Infof("Accessing websites periodically to keep you online")
 
 	accessTarget := func(url string, ipv6 bool) (ret error) {
 		network := "tcp4"
@@ -242,7 +244,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 	for {
 		if ret = accessTarget(v4Target, false); ret != nil {
 			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
-			fmt.Printf("Failed to access %s, you have to re-login.\n", v4Target)
+			logger.Errorf("Failed to access %s, you have to re-login.\n", v4Target)
 			break
 		}
 		// Consumes ~100MB per day
@@ -277,8 +279,8 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		// FIXME: currently when logout, the GetAcID is actually broken.
 		// Though logout does not require correct ac_id now, it can break.
 		if err != nil && !logout {
-			logger.Warningf("Failed to get ac_id: %v", err)
-			logger.Warningf("Login may fail with 'IP地址异常'.")
+			logger.Debugf("Failed to get ac_id: %v", err)
+			logger.Debugf("Login may fail with 'IP地址异常'.")
 		}
 		acID = retAcID
 	}
@@ -290,10 +292,10 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 			settings.Username = username
 		}
 		if online && !logout {
-			fmt.Println("Currently online!")
+			logger.Infof("Currently online!")
 			return nil
 		} else if !online && logout {
-			fmt.Println("Currently offline!")
+			logger.Infof("Currently offline!")
 			return nil
 		}
 	}
@@ -325,17 +327,17 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 		action = "Logout"
 	}
 	if err == nil {
-		fmt.Printf("%s Successfully!\n", action)
+		logger.Infof("%s Successfully!\n", action)
 		runHook(c)
 		if settings.KeepOn {
 			if len(settings.Ip) != 0 {
-				fmt.Printf("Cannot keep another IP online\n")
+				logger.Errorf("Cannot keep another IP online\n")
 			} else {
 				return keepAliveLoop(c, true)
 			}
 		}
 	} else {
-		fmt.Printf("%s Failed: %v\n", action, err)
+		logger.Errorf("%s Failed: %v\n", action, err)
 	}
 	return err
 }
@@ -364,13 +366,13 @@ func cmdLogin(c *cli.Context) error {
 	}
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, false)
 	if success {
-		fmt.Printf("Login Successfully!\n")
+		logger.Infof("Login Successfully!\n")
 		runHook(c)
 		if settings.KeepOn {
 			return keepAliveLoop(c, false)
 		}
 	} else {
-		fmt.Printf("Login Failed: %s\n", err.Error())
+		logger.Errorf("Login Failed: %s\n", err.Error())
 	}
 	return err
 }
@@ -383,10 +385,10 @@ func cmdLogout(c *cli.Context) error {
 	//err := requestUser()
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
 	if success {
-		fmt.Printf("Logout Successfully!\n")
+		logger.Infof("Logout Successfully!\n")
 		runHook(c)
 	} else {
-		fmt.Printf("Logout Failed: %s\n", err.Error())
+		logger.Errorf("Logout Failed: %s\n", err.Error())
 	}
 	return err
 }
@@ -409,14 +411,14 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "2.0.1",
+		Version:  "2.0.2",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
-			&cli.BoolFlag{Name: "daemonize, D", Usage: "run without reading username/password from standard input"},
+			&cli.BoolFlag{Name: "daemonize, D", Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 		},
