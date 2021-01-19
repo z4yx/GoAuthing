@@ -1,0 +1,38 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        stable: 'false'
+        go-version: '1.16.0-beta1'
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: go get -v -t -d ./...
+
+    - name: Build
+      run: |
+        CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -ldflags="-s -w" -o auth-thu.macos.x86_64 ./cli
+        CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -ldflags="-s -w" -o auth-thu.macos.arm64 ./cli
+        CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -ldflags="-s -w" -o auth-thu.win64.exe ./cli
+        CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.x86_64 ./cli
+        CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.arm64 ./cli
+        CGO_ENABLED=0 GOARCH=arm GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.arm ./cli
+        CGO_ENABLED=0 GOARCH=mipsle GOOS=linux GOMIPS=softfloat go build -ldflags="-s -w" -o auth-thu.linux.mipsle ./cli
+        CGO_ENABLED=0 GOARCH=mips GOOS=linux GOMIPS=softfloat go build -ldflags="-s -w" -o auth-thu.linux.mipsbe ./cli
+        CGO_ENABLED=0 GOARCH=ppc64le GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.ppc64le ./cli
+
