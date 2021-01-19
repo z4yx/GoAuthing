@@ -1,4 +1,4 @@
-module auth-thu
+module github.com/z4yx/GoAuthing
 
 go 1.12
 

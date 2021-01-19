@@ -18,8 +18,8 @@ import (
 	"github.com/juju/loggo"
 	cli "gopkg.in/urfave/cli.v1"
 
-	"auth-thu/libauth"
-	"auth-thu/libtunet"
+	"github.com/z4yx/GoAuthing/libauth"
+	"github.com/z4yx/GoAuthing/libtunet"
 )
 
 type Settings struct {
