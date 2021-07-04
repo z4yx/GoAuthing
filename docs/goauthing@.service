@@ -1,8 +1,11 @@
 [Unit]
 Description=Authenticating utility for auth.tsinghua.edu.cn
+StartLimitIntervalSec=30
+StartLimitBurst=3
 
 [Service]
 # default config is in ~/.auth-thu
+ExecStartPre=-/usr/local/bin/auth-thu -D deauth
 ExecStartPre=-/usr/local/bin/auth-thu -D auth
 ExecStartPre=-/usr/local/bin/auth-thu -D login
 ExecStart=/usr/local/bin/auth-thu -D online
