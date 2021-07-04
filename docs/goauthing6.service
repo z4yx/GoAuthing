@@ -1,7 +1,6 @@
 [Unit]
 Description=Authenticating utility for auth.tsinghua.edu.cn
-StartLimitIntervalSec=30
-StartLimitBurst=3
+StartLimitIntervalSec=0
 
 [Service]
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D deauth -6
@@ -10,6 +9,7 @@ ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D online
 StandardOutput=journal
 User=nobody
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy = multi-user.target

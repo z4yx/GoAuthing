@@ -1,7 +1,6 @@
 [Unit]
 Description=Authenticating utility for auth.tsinghua.edu.cn
-StartLimitIntervalSec=30
-StartLimitBurst=3
+StartLimitIntervalSec=0
 
 [Service]
 # default config is in ~/.auth-thu
@@ -12,6 +11,7 @@ ExecStart=/usr/local/bin/auth-thu -D online
 StandardOutput=journal
 User=%i
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy = multi-user.target
