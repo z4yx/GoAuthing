@@ -16,7 +16,7 @@ import (
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
-	cli "gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v1"
 
 	"github.com/z4yx/GoAuthing/libauth"
 	"github.com/z4yx/GoAuthing/libtunet"
@@ -41,26 +41,22 @@ type Settings struct {
 var logger = loggo.GetLogger("auth-thu")
 var settings Settings
 
-func parseSettingsFile(path string, important bool) error {
+func parseSettingsFile(path string) error {
 	sf, err := os.Open(path)
 	if err != nil {
-		if important {
-			logger.Errorf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
-			err = cli.NewExitError("Read config file failed", 1)
-			return err
-		} else {
-			logger.Debugf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
-			return nil
-		}
+		return fmt.Errorf("read config file failed (%s)", err)
 	}
-	logger.Debugf("Read config file \"%s\" succeeded\n", path)
 	defer sf.Close()
 	bv, _ := ioutil.ReadAll(sf)
-	json.Unmarshal(bv, &settings)
+	err = json.Unmarshal(bv, &settings)
+	if err != nil {
+		return fmt.Errorf("parse config file \"%s\" failed (%s)", path, err)
+	}
+	logger.Debugf("Read config file \"%s\" succeeded\n", path)
 	return nil
 }
 
-func mergeCliSettings(c *cli.Context) error {
+func mergeCliSettings(c *cli.Context) {
 	var merged Settings
 	merged.Username = c.GlobalString("username")
 	if len(merged.Username) == 0 {
@@ -106,7 +102,6 @@ func mergeCliSettings(c *cli.Context) error {
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
 	logger.Debugf("Settings AcID: \"%s\"\n", settings.AcID)
 	logger.Debugf("Settings Campus: %t\n", settings.Campus)
-	return nil
 }
 
 func requestUser() (err error) {
@@ -117,7 +112,7 @@ func requestUser() (err error) {
 		settings.Username = strings.TrimSpace(settings.Username)
 	}
 	if len(settings.Username) == 0 {
-		err = cli.NewExitError("username can't be empty", 1)
+		err = fmt.Errorf("username can't be empty")
 	}
 	return
 }
@@ -129,24 +124,24 @@ func requestPasswd() (err error) {
 		b, err = gopass.GetPasswdMasked()
 		if err != nil {
 			// Handle gopass.ErrInterrupted or getch() read error
-			err = cli.NewExitError("interrupted", 1)
+			err = fmt.Errorf("interrupted")
 			return
 		}
 		settings.Password = string(b)
 	}
 	if len(settings.Password) == 0 {
-		err = cli.NewExitError("password can't be empty", 1)
+		err = fmt.Errorf("password can't be empty")
 	}
 	return
 }
 
 func setLoggerLevel(debug bool, daemon bool) {
 	if daemon {
-		loggo.ConfigureLoggers("auth-thu=ERROR;libtunet=ERROR;libauth=ERROR")
+		_ = loggo.ConfigureLoggers("auth-thu=ERROR;libtunet=ERROR;libauth=ERROR")
 	} else if debug {
-		loggo.ConfigureLoggers("auth-thu=DEBUG;libtunet=DEBUG;libauth=DEBUG")
+		_ = loggo.ConfigureLoggers("auth-thu=DEBUG;libtunet=DEBUG;libauth=DEBUG")
 	} else {
-		loggo.ConfigureLoggers("auth-thu=INFO;libtunet=INFO;libauth=INFO")
+		_ = loggo.ConfigureLoggers("auth-thu=INFO;libtunet=INFO;libauth=INFO")
 	}
 }
 
@@ -157,16 +152,18 @@ func parseSettings(c *cli.Context) (err error) {
 	// Early debug flag setting (have debug messages when access config file)
 	setLoggerLevel(c.GlobalBool("debug"), c.GlobalBool("daemonize"))
 	cf := c.GlobalString("config-file")
+	throwConfigFileError := true
 	if len(cf) == 0 {
+		// If run in daemon mode, config file is a must
+		throwConfigFileError = c.GlobalBool("daemonize")
 		homedir, _ := os.UserHomeDir()
 		cf = path.Join(homedir, ".auth-thu")
-		// If run in daemon mode, config file is a must
-		err = parseSettingsFile(cf, c.GlobalBool("daemonize"))
+		err = parseSettingsFile(cf)
 	} else {
-		err = parseSettingsFile(cf, true)
+		err = parseSettingsFile(cf)
 	}
-	if err != nil {
-		return
+	if throwConfigFileError && err != nil {
+		return err
 	}
 	mergeCliSettings(c)
 	// Late debug flag setting
@@ -200,24 +197,18 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 					myDial := &net.Dialer{
 						Timeout:   6 * time.Second,
 						KeepAlive: 0,
-						DualStack: false,
+						FallbackDelay: -1,  // disable RFC 6555 Fast Fallback
 					}
 					return myDial.DialContext(ctx, network, addr)
 				},
 			},
 		}
-		for errorCount := 0; errorCount < 3; errorCount++ {
-			var resp *http.Response
-			resp, ret = netClient.Get(url)
-			if ret == nil {
-				defer resp.Body.Close()
-				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
-				_, ret := ioutil.ReadAll(resp.Body)
-				if ret == nil {
-					break
-				}
-			}
+		resp, ret := netClient.Head(url)
+		if ret != nil {
+			return
 		}
+		defer resp.Body.Close()
+		logger.Debugf("HTTP status code %d\n", resp.StatusCode)
 		return
 	}
 	targetInside := "https://www.tsinghua.edu.cn/"
@@ -232,7 +223,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 			case <-stop:
 				break
 			case <-time.After(13 * time.Minute):
-				accessTarget(targetInside, true)
+				_ = accessTarget(targetInside, true)
 			}
 		}
 	}()
@@ -243,17 +234,16 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 	}
 	for {
 		if ret = accessTarget(v4Target, false); ret != nil {
-			logger.Errorf("Accessing %s: %v\n", v4Target, ret)
-			logger.Errorf("Failed to access %s, you have to re-login.\n", v4Target)
+			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", v4Target, ret)
 			break
 		}
-		// Consumes ~100MB per day
-		time.Sleep(55 * time.Second)
+		// Consumes ~5MB per day
+		time.Sleep(3 * time.Second)
 	}
 	return
 }
 
-func cmdAuthUtil(c *cli.Context, logout bool) error {
+func authUtil(c *cli.Context, logout bool) error {
 	err := parseSettings(c)
 	if err != nil {
 		return err
@@ -337,32 +327,43 @@ func cmdAuthUtil(c *cli.Context, logout bool) error {
 			}
 		}
 	} else {
-		logger.Errorf("%s Failed: %v\n", action, err)
+		err = fmt.Errorf("%s Failed: %w", action, err)
 	}
 	return err
 }
 
-func cmdAuth(c *cli.Context) error {
+func cmdAuth(c *cli.Context) {
 	logout := c.Bool("logout")
-	return cmdAuthUtil(c, logout)
+	err := authUtil(c, logout)
+	if err != nil {
+		logger.Errorf("Auth error: %s", err)
+		os.Exit(1)
+	}
 }
 
-func cmdDeauth(c *cli.Context) error {
-	return cmdAuthUtil(c, true)
+func cmdDeauth(c *cli.Context) {
+	err := authUtil(c, true)
+	if err != nil {
+		logger.Errorf("Deauth error: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func cmdLogin(c *cli.Context) error {
 	err := parseSettings(c)
 	if err != nil {
-		return err
+	    logger.Errorf("Parse setting error: %s\n", err)
+	    os.Exit(1)
 	}
 	err = requestUser()
 	if err != nil {
-		return err
+		logger.Errorf("Request user error: %s\n", err)
+		os.Exit(1)
 	}
 	err = requestPasswd()
 	if err != nil {
-		return err
+		logger.Errorf("Request password error: %s\n", err)
+		os.Exit(1)
 	}
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, false)
 	if success {
@@ -372,15 +373,17 @@ func cmdLogin(c *cli.Context) error {
 			return keepAliveLoop(c, false)
 		}
 	} else {
-		logger.Errorf("Login Failed: %s\n", err.Error())
+		logger.Errorf("Login error: %s\n", err)
+		os.Exit(1)
 	}
 	return err
 }
 
-func cmdLogout(c *cli.Context) error {
+func cmdLogout(c *cli.Context) {
 	err := parseSettings(c)
 	if err != nil {
-		return err
+		logger.Errorf("Parse setting error: %s\n", err)
+		os.Exit(1)
 	}
 	//err := requestUser()
 	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
@@ -388,17 +391,22 @@ func cmdLogout(c *cli.Context) error {
 		logger.Infof("Logout Successfully!\n")
 		runHook(c)
 	} else {
-		logger.Errorf("Logout Failed: %s\n", err.Error())
+		logger.Errorf("Logout Failed: %s\n", err)
+		os.Exit(1)
 	}
-	return err
 }
 
-func cmdKeepalive(c *cli.Context) error {
+func cmdKeepalive(c *cli.Context) {
 	err := parseSettings(c)
 	if err != nil {
-		return err
+		logger.Errorf("Parse setting error: %s\n", err)
+		os.Exit(1)
 	}
-	return keepAliveLoop(c, c.Bool("auth"))
+	err = keepAliveLoop(c, c.Bool("auth"))
+	if err != nil {
+	    logger.Errorf("Keepalive error: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -411,7 +419,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "2.0.2",
+		Version:  "2.1",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -482,8 +490,9 @@ func main() {
 			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
 			{Name: "Jiajie Chen", Email: "c@jia.je"},
 			{Name: "KomeijiOcean", Email: "oceans2000@126.com"},
+			{Name: "Sharzy L", Email: "me@sharzy.in"},
 		},
 	}
 
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 }
