@@ -205,7 +205,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		}
 		for errorCount := 0; errorCount < 3; errorCount++ {
 			var resp *http.Response
-			resp, ret = netClient.Get(url)
+			resp, ret = netClient.Head(url)
 			if ret == nil {
 				defer resp.Body.Close()
 				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
@@ -496,6 +496,7 @@ func main() {
 			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
 			{Name: "Jiajie Chen", Email: "c@jia.je"},
 			{Name: "KomeijiOcean", Email: "oceans2000@126.com"},
+			{Name: "Sharzy L", Email: "me@sharzy.in"},
 		},
 	}
 

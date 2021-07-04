@@ -27,7 +27,7 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.0.1
+   2.0.2
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -35,6 +35,7 @@ AUTHORS:
    ZenithalHourlyRate <i@zenithal.me>
    Jiajie Chen <c@jia.je>
    KomeijiOcean <oceans2000@126.com>
+   Sharzy L <me@sharzy.in>
 
 COMMANDS:
      auth    (default) Auth via auth4/6.tsinghua
