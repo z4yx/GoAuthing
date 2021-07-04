@@ -45,18 +45,28 @@ func parseSettingsFile(path string, important bool) error {
 	sf, err := os.Open(path)
 	if err != nil {
 		if important {
-			logger.Errorf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
+			logger.Errorf("Read config file failed (%s)\n", err)
 			err = cli.NewExitError("Read config file failed", 1)
 			return err
 		} else {
-			logger.Debugf("Read config file \"%s\" failed (may be existence or access problem)\n", path)
+			logger.Debugf("Read config file failed (%s)\n", err)
 			return nil
 		}
 	}
 	logger.Debugf("Read config file \"%s\" succeeded\n", path)
 	defer sf.Close()
 	bv, _ := ioutil.ReadAll(sf)
-	json.Unmarshal(bv, &settings)
+	err = json.Unmarshal(bv, &settings)
+	if err != nil {
+		if important {
+			logger.Errorf("Parse config file \"%s\" failed (%s)\n", path, err)
+			err = cli.NewExitError("Read config file failed", 1)
+			return err
+		} else {
+			logger.Debugf("Read config file \"%s\" failed (%s)\n", path, err)
+			return nil
+		}
+	}
 	return nil
 }
 
@@ -248,7 +258,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 			break
 		}
 		// Consumes ~100MB per day
-		time.Sleep(55 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 	return
 }
@@ -485,5 +495,8 @@ func main() {
 		},
 	}
 
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		os.Exit(1)
+	}
 }
