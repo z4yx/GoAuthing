@@ -197,7 +197,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 					myDial := &net.Dialer{
 						Timeout:   6 * time.Second,
 						KeepAlive: 0,
-						DualStack: false,
+						FallbackDelay: -1,  // disable RFC 6555 Fast Fallback
 					}
 					return myDial.DialContext(ctx, network, addr)
 				},
@@ -240,11 +240,11 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 	}
 	for {
 		if ret = accessTarget(v4Target, false); ret != nil {
-			ret = fmt.Errorf("accessing %s failed, you need to re-login: %w", v4Target, ret)
+			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", v4Target, ret)
 			break
 		}
-		// Consumes ~100MB per day
-		time.Sleep(5 * time.Second)
+		// Consumes ~5MB per day
+		time.Sleep(3 * time.Second)
 	}
 	return
 }
