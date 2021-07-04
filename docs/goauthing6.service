@@ -2,7 +2,7 @@
 Description=Authenticating utility for auth.tsinghua.edu.cn
 
 [Service]
-ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D auth
+ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D auth -6
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D login
 ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D online
 StandardOutput=journal
