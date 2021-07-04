@@ -203,18 +203,12 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 				},
 			},
 		}
-		for errorCount := 0; errorCount < 3; errorCount++ {
-			var resp *http.Response
-			resp, ret = netClient.Head(url)
-			if ret == nil {
-				defer resp.Body.Close()
-				logger.Debugf("HTTP status code %d\n", resp.StatusCode)
-				_, ret := ioutil.ReadAll(resp.Body)
-				if ret == nil {
-					break
-				}
-			}
+		resp, ret := netClient.Head(url)
+		if ret != nil {
+			return
 		}
+		defer resp.Body.Close()
+		logger.Debugf("HTTP status code %d\n", resp.StatusCode)
 		return
 	}
 	targetInside := "https://www.tsinghua.edu.cn/"
