@@ -27,7 +27,7 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.1
+   2.1.1
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -105,8 +105,6 @@ setfacl -m u:nobody:r /etc/goauthing.json
 ```
 
 Or, to be more secure, you can choose `goauthing@.service` and store the config in home directory. 
-
-For other authentication like IPv6, you can copy these service files and modify them correspondingly.
 
 It is suggested that one configures and runs it manually first with `debug` flag turned on, which ensures the correctness of one's config, then start it as system service. For `daemonize` flag, it forces the program to only log errors, hence debugging should be done earlier and manually. `daemonize` is automatically turned on for system service (ref to associated systemd unit files).
 
