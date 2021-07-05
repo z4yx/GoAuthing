@@ -145,27 +145,50 @@ func setLoggerLevel(debug bool, daemon bool) {
 	}
 }
 
+func locateConfigFile(c *cli.Context) (cf string) {
+	cf = c.GlobalString("config-file")
+	if len(cf) != 0 {
+		return
+	}
+
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+	homedir, _ := os.UserHomeDir()
+	if len(xdgConfigHome) == 0 {
+		xdgConfigHome = path.Join(homedir, ".config")
+	}
+	cf = path.Join(xdgConfigHome, "auth-thu")
+	_, err := os.Stat(cf)
+	if !os.IsNotExist(err) {
+		return
+	}
+
+	cf = path.Join(homedir, ".auth-thu")
+	_, err = os.Stat(cf)
+	if !os.IsNotExist(err) {
+		return
+	}
+
+	return ""
+}
+
 func parseSettings(c *cli.Context) (err error) {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
 	// Early debug flag setting (have debug messages when access config file)
 	setLoggerLevel(c.GlobalBool("debug"), c.GlobalBool("daemonize"))
-	cf := c.GlobalString("config-file")
-	throwConfigFileError := true
-	if len(cf) == 0 {
-		// If run in daemon mode, config file is a must
-		throwConfigFileError = c.GlobalBool("daemonize")
-		homedir, _ := os.UserHomeDir()
-		cf = path.Join(homedir, ".auth-thu")
-		err = parseSettingsFile(cf)
-	} else {
-		err = parseSettingsFile(cf)
+
+	cf := locateConfigFile(c)
+	if len(cf) == 0 && c.GlobalBool("daemonize") {
+		return fmt.Errorf("cannot find config file (it is necessary in daemon mode)")
 	}
-	if throwConfigFileError && err != nil {
-		return err
+	if len(cf) != 0 {
+		err = parseSettingsFile(cf)
+		if err != nil {
+			return err
+		}
+		mergeCliSettings(c)
 	}
-	mergeCliSettings(c)
 	// Late debug flag setting
 	setLoggerLevel(settings.Debug, settings.Daemon)
 	return
@@ -228,13 +251,13 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		}
 	}()
 
-	v4Target := targetOutside
-	if campusOnly {
-		v4Target = targetInside
-	}
 	for {
-		if ret = accessTarget(v4Target, false); ret != nil {
-			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", v4Target, ret)
+		target := targetOutside
+		if campusOnly || settings.V6 {
+			target = targetInside
+		}
+		if ret = accessTarget(target, settings.V6); ret != nil {
+			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", target, ret)
 			break
 		}
 		// Consumes ~5MB per day
@@ -419,7 +442,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "2.1",
+		Version:  "2.1.1",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
@@ -479,6 +502,7 @@ func main() {
 				Usage: "Keep your computer online",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "auth, a", Usage: "keep the Auth online only"},
+					&cli.BoolFlag{Name: "ipv6, 6", Usage: "keep only ipv6 connection online"},
 				},
 				Action: cmdKeepalive,
 			},

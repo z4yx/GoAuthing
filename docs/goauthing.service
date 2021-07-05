@@ -7,7 +7,6 @@ ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D deauth
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D auth
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D login
 ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D online
-StandardOutput=journal
 User=nobody
 Restart=always
 RestartSec=5

@@ -27,7 +27,7 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.1
+   2.1.1
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
@@ -62,6 +62,7 @@ COMMANDS:
      online  Keep your computer online
        OPTIONS:
          --auth, -a  keep the Auth online only
+         --ipv6, -6  keep only ipv6 connection online
 
 GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
@@ -74,8 +75,8 @@ GLOBAL OPTIONS:
    --version, -v                     print the version
 ```
 
+The program looks for a config file in `$XDG_CONFIG_HOME/auth-thu`, `~/.config/auth-thu`, `~/.auth-thu` in order.
 Write a config file to store your username & password or other options in the following format.
-The default location of config file is `~/.auth-thu`.
 
 ```
 {
@@ -103,9 +104,7 @@ Note that the program should have access to the configure file. For `goauthing.s
 setfacl -m u:nobody:r /etc/goauthing.json
 ```
 
-Or, to be more secure, you can choose `goauthing@.service` and store the config in `~/.auth-thu`.
-
-For other authentication like IPv6, you can copy these service files and modify them correspondingly.
+Or, to be more secure, you can choose `goauthing@.service` and store the config in home directory. 
 
 It is suggested that one configures and runs it manually first with `debug` flag turned on, which ensures the correctness of one's config, then start it as system service. For `daemonize` flag, it forces the program to only log errors, hence debugging should be done earlier and manually. `daemonize` is automatically turned on for system service (ref to associated systemd unit files).
 
