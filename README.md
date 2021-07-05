@@ -74,8 +74,8 @@ GLOBAL OPTIONS:
    --version, -v                     print the version
 ```
 
+The program looks for a config file in `$XDG_CONFIG_HOME/auth-thu`, `~/.config/auth-thu`, `~/.auth-thu` in order.
 Write a config file to store your username & password or other options in the following format.
-The default location of config file is `~/.auth-thu`.
 
 ```
 {
@@ -103,7 +103,7 @@ Note that the program should have access to the configure file. For `goauthing.s
 setfacl -m u:nobody:r /etc/goauthing.json
 ```
 
-Or, to be more secure, you can choose `goauthing@.service` and store the config in `~/.auth-thu`.
+Or, to be more secure, you can choose `goauthing@.service` and store the config in home directory. 
 
 For other authentication like IPv6, you can copy these service files and modify them correspondingly.
 

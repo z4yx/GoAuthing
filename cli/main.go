@@ -145,27 +145,50 @@ func setLoggerLevel(debug bool, daemon bool) {
 	}
 }
 
+func locateConfigFile(c *cli.Context) (cf string) {
+	cf = c.GlobalString("config-file")
+	if len(cf) != 0 {
+		return
+	}
+
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+	homedir, _ := os.UserHomeDir()
+	if len(xdgConfigHome) == 0 {
+		xdgConfigHome = path.Join(homedir, ".config")
+	}
+	cf = path.Join(xdgConfigHome, "auth-thu")
+	_, err := os.Stat(cf)
+	if !os.IsNotExist(err) {
+		return
+	}
+
+	cf = path.Join(homedir, ".auth-thu")
+	_, err = os.Stat(cf)
+	if !os.IsNotExist(err) {
+		return
+	}
+
+	return ""
+}
+
 func parseSettings(c *cli.Context) (err error) {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
 	// Early debug flag setting (have debug messages when access config file)
 	setLoggerLevel(c.GlobalBool("debug"), c.GlobalBool("daemonize"))
-	cf := c.GlobalString("config-file")
-	throwConfigFileError := true
-	if len(cf) == 0 {
-		// If run in daemon mode, config file is a must
-		throwConfigFileError = c.GlobalBool("daemonize")
-		homedir, _ := os.UserHomeDir()
-		cf = path.Join(homedir, ".auth-thu")
-		err = parseSettingsFile(cf)
-	} else {
-		err = parseSettingsFile(cf)
+
+	cf := locateConfigFile(c)
+	if len(cf) == 0 && c.GlobalBool("daemonize") {
+		return fmt.Errorf("cannot find config file (it is necessary in daemon mode)")
 	}
-	if throwConfigFileError && err != nil {
-		return err
+	if len(cf) != 0 {
+		err = parseSettingsFile(cf)
+		if err != nil {
+			return err
+		}
+		mergeCliSettings(c)
 	}
-	mergeCliSettings(c)
 	// Late debug flag setting
 	setLoggerLevel(settings.Debug, settings.Daemon)
 	return
