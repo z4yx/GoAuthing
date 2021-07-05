@@ -228,13 +228,13 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		}
 	}()
 
-	v4Target := targetOutside
-	if campusOnly {
-		v4Target = targetInside
-	}
 	for {
-		if ret = accessTarget(v4Target, false); ret != nil {
-			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", v4Target, ret)
+		target := targetOutside
+		if campusOnly || settings.V6 {
+			target = targetInside
+		}
+		if ret = accessTarget(target, settings.V6); ret != nil {
+			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", target, ret)
 			break
 		}
 		// Consumes ~5MB per day
@@ -479,6 +479,7 @@ func main() {
 				Usage: "Keep your computer online",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "auth, a", Usage: "keep the Auth online only"},
+					&cli.BoolFlag{Name: "ipv6, 6", Usage: "keep only ipv6 connection online"},
 				},
 				Action: cmdKeepalive,
 			},
