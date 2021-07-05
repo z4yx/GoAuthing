@@ -62,6 +62,7 @@ COMMANDS:
      online  Keep your computer online
        OPTIONS:
          --auth, -a  keep the Auth online only
+         --ipv6, -6  keep only ipv6 connection online
 
 GLOBAL OPTIONS:
    --username name, -u name          your TUNET account name
