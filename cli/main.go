@@ -235,7 +235,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		return
 	}
 	targetInside := "https://www.tsinghua.edu.cn/"
-	targetOutside := "http://www.baidu.com/"
+	targetOutside := "https://www.baidu.com/"
 
 	stop := make(chan int, 1)
 	defer func() { stop <- 1 }()
@@ -442,7 +442,7 @@ func main() {
 	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "2.1.1",
+		Version:  "2.1.2",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
