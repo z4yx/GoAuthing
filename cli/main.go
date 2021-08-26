@@ -187,8 +187,8 @@ func parseSettings(c *cli.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		mergeCliSettings(c)
 	}
+	mergeCliSettings(c)
 	// Late debug flag setting
 	setLoggerLevel(settings.Debug, settings.Daemon)
 	return
