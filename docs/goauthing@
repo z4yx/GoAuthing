@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# Authenticating utility for auth.tsinghua.edu.cn
+# This init script is used explicitly with OpenWRT
+
+USE_PROCD=1
+START=98
+PROG="/usr/bin/goauthing"
+SERV=goauthing  # UCI config at /etc/config/goauthing
+
+start_instance() {
+  local username password
+  config_get username config username
+  config_get password config password
+  local args="-u $username -p $password"
+
+  "$PROG" $args deauth
+  "$PROG" $args auth
+  "$PROG" $args login
+
+  procd_open_instance
+  procd_set_param command "$PROG"
+  procd_append_param command $args online
+  procd_set_param stderr 1
+  procd_set_param respawn
+  procd_close_instance
+}
+
+logout() {
+  local username password
+  config_get username config username
+  config_get password config password
+  local args="-u $username -p $password"
+
+  "$PROG" $args logout
+}
+
+start_service() {
+  config_load "$SERV"
+  config_foreach start_instance "$SERV"
+}
+
+stop_service() {
+  config_load "$SERV"
+  config_foreach logout "$SERV"
+}
