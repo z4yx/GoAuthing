@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/z4yx/GoAuthing.svg?branch=master)](https://travis-ci.org/z4yx/GoAuthing)
 ![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)
 
-A commandline Tunet (auth4/6.tsinghua.edu.cn, Tsinghua-IPv4) authentication tool.
+A command-line Tunet (auth4/6.tsinghua.edu.cn, Tsinghua-IPv4) authentication tool.
 
 ## Download Binary
 
@@ -96,15 +96,28 @@ Write a config file to store your username & password or other options in the fo
 
 Unless you have special need, you can only have `username` and `password` field in your config file. For `host`, the default value defined in code should be sufficient hence there should be no need to fill it. `UseV6` automatically determine the `host` to use. For `ip`, unless you are auth/login the other boxes you have(not the box `auth-thu` is running on), you can leave it blank. For those boxes unable to get correct acid themselves, we can specify the acid for them by using `acId`. Other options are self-explanatory.
 
-To configure automatic authentication on systemd based Linux distro, take a look at `docs` folder. Just modify the path in configure files, then copy them to `/etc/systemd/system` folder.
+## Autostart
+To configure automatic authentication on systemd-based Linux distro, take a look at `docs` folder. Just modify the path in configuration files, then copy them to `/etc/systemd/system` folder.
 
-Note that the program should have access to the configure file. For `goauthing.service`, since it is run as `nobody`, `/etc/goauthing.json` can not be read by it, hence you can use the following command to enable access.
+Note that the program should have access to the configuration file.
+For `goauthing.service`, since it is run as `nobody`, `/etc/goauthing.json` can not be read by it, hence you can use the following command to enable access:
 
 ```
 setfacl -m u:nobody:r /etc/goauthing.json
 ```
 
-Or, to be more secure, you can choose `goauthing@.service` and store the config in home directory. 
+Or, to be more secure, you can choose `goauthing@.service` and store the configuration file in the home directory. 
+
+For OpenWRT users, there are two options available: `goauthing` loading the configuration file, and `goauthing@` interacting with the UCI. The init script should go to the `/etc/init.d/` folder. With the latter, use the following procedure to set up:
+
+```
+touch /etc/config/goauthing
+uci set goauthing.config.username='<YOUR-TUNET-ACCOUNT-NAME>'
+uci set goauthing.config.password='<YOUR-TUNET-PASSWORD>'
+uci commit goauthing
+/etc/init.d/goauthing enable
+/etc/init.d/goauthing start
+```
 
 It is suggested that one configures and runs it manually first with `debug` flag turned on, which ensures the correctness of one's config, then start it as system service. For `daemonize` flag, it forces the program to only log errors, hence debugging should be done earlier and manually. `daemonize` is automatically turned on for system service (ref to associated systemd unit files).
 

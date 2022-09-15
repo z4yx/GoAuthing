@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+# Authenticating utility for auth.tsinghua.edu.cn
+# This init script is used explicitly with OpenWRT
+
+USE_PROCD=1
+START=98
+PROG="/usr/bin/goauthing"  # cp script to this path first
+CONF="/etc/goauthing.json"
+
+start_pre() {
+	"$PROG" -c "$CONF" -D deauth
+	"$PROG" -c "$CONF" -D auth
+	"$PROG" -c "$CONF" -D login
+}
+
+start_service() {
+	start_pre
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_append_param command -c "$CONF" -D online
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	"$PROG" -c "$CONF" -D logout
+}
