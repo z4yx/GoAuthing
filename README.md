@@ -135,4 +135,4 @@ go build -o auth-thu github.com/z4yx/GoAuthing/cli
 This project was inspired by the following projects:
 
 - https://github.com/jiegec/auth-tsinghua
-- https://github.com/Berrysoft/ClassLibrary
+- https://github.com/Berrysoft/TsinghuaNet
