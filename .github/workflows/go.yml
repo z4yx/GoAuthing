@@ -37,4 +37,5 @@ jobs:
         CGO_ENABLED=0 GOARCH=mips GOOS=linux GOMIPS=softfloat go build -ldflags="-s -w" -o auth-thu.linux.mipsbe ./cli/main.go
         CGO_ENABLED=0 GOARCH=ppc64le GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.ppc64le ./cli/main.go
         CGO_ENABLED=0 GOARCH=riscv64 GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.riscv64 ./cli/main.go
+        CGO_ENABLED=0 GOARCH=loong64 GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.loong64 ./cli/main.go
 
