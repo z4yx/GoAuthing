@@ -1,6 +1,6 @@
 # GoAuthing
 
-[![Build Status](https://travis-ci.org/z4yx/GoAuthing.svg?branch=master)](https://travis-ci.org/z4yx/GoAuthing)
+[![Build Status](https://github.com/z4yx/GoAuthing/actions/workflows/go.yml/badge.svg)](https://github.com/z4yx/GoAuthing/actions)
 ![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)
 
 A command-line Tunet (auth4/6.tsinghua.edu.cn, Tsinghua-IPv4) authentication tool.
