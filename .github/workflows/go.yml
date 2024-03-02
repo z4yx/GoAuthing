@@ -23,6 +23,9 @@ jobs:
     - name: Get dependencies
       run: go get -v -t -d ./...
 
+    - name: Test building with vendoring (#35)
+      run: go mod vendor && go build -mod=vendor ./cli/main.go
+
     - name: Build
       run: |
         CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -ldflags="-s -w" -o auth-thu.macos.x86_64 ./cli/main.go
