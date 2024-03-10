@@ -126,6 +126,21 @@ uci commit goauthing
 /etc/init.d/goauthing start
 ```
 
+### Docker
+
+For Docker users, you can run the container with a restart policy. An example docker compose is like this:
+
+```yaml
+services:
+  goauthing:
+    image: ghcr.io/z4yx/goauthing:latest
+    container_name: goauthing
+    restart: always
+    volumes:
+      - /path/to/your/config:/.auth-thu
+   command: auth -k
+```
+
 ## Build
 
 Requires Go 1.11 or above
