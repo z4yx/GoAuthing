@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: '1.20'
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Get dependencies
       run: go get -v -t -d ./...
@@ -39,21 +39,11 @@ jobs:
         CGO_ENABLED=0 GOARCH=loong64 GOOS=linux go build -ldflags="-s -w" -o auth-thu.linux.loong64 ./cli/main.go
 
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
-        draft: false
-        prerelease: false 
-    - name: Upload Artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         tag_name="${GITHUB_REF##*/}"
-        hub release edit $(find . -type f -executable -name "auth-thu.*" -printf "-a %p ") -m "" "$tag_name" 
+        gh release create "$tag_name" -t "$tag_name" auth-thu.*
 
   build-image:
     name: Build Image
