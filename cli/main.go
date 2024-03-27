@@ -306,6 +306,9 @@ func authUtil(c *cli.Context, logout bool) error {
 		}
 		if online && !logout {
 			logger.Infof("Currently online!")
+			if settings.KeepOn {
+				return keepAliveLoop(c, true)
+			}
 			return nil
 		} else if !online && logout {
 			logger.Infof("Currently offline!")
