@@ -5,6 +5,7 @@ StartLimitIntervalSec = 0
 [Service]
 ExecStartPre = -/usr/local/bin/auth-thu -D deauth -6
 ExecStartPre = -/usr/local/bin/auth-thu -D auth -6
+ExecStartPre = -sleep 3
 ExecStart    = /usr/local/bin/auth-thu -D online -6
 Restart      = always
 RestartSec   = 5
