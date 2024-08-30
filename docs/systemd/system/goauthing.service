@@ -6,6 +6,7 @@ StartLimitIntervalSec=0
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D deauth
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D auth
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D login
+ExecStartPre=-sleep 3
 ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D online
 User=nobody
 Restart=always

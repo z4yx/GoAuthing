@@ -16,6 +16,7 @@ start_instance() {
   "$PROG" $args deauth
   "$PROG" $args auth
   "$PROG" $args login
+  sleep 3
 
   procd_open_instance
   procd_set_param command "$PROG"

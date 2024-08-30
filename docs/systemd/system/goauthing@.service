@@ -7,6 +7,7 @@ StartLimitIntervalSec=0
 ExecStartPre=-/usr/local/bin/auth-thu -D deauth
 ExecStartPre=-/usr/local/bin/auth-thu -D auth
 ExecStartPre=-/usr/local/bin/auth-thu -D login
+ExecStartPre=-sleep 3
 ExecStart=/usr/local/bin/auth-thu -D online
 User=%i
 Restart=always
