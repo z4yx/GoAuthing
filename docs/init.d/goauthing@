@@ -7,19 +7,26 @@ START=98
 PROG="/usr/bin/goauthing"
 SERV=goauthing  # UCI config at /etc/config/goauthing
 
+generate_command() {
+CMD="\
+\"$PROG\" $1 deauth; \
+\"$PROG\" $1 auth; \
+\"$PROG\" $1 login; \
+\"$PROG\" $1 online; \
+"
+}
+
 start_instance() {
   local username password
   config_get username config username
   config_get password config password
   local args="-u $username -p $password"
 
-  "$PROG" $args deauth
-  "$PROG" $args auth
-  "$PROG" $args login
+  generate_command "$args"
 
   procd_open_instance
-  procd_set_param command "$PROG"
-  procd_append_param command $args online
+  procd_set_param command sh
+  procd_append_param command -c "$CMD"
   procd_set_param stderr 1
   procd_set_param respawn
   procd_close_instance
