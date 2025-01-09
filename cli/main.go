@@ -19,7 +19,6 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/z4yx/GoAuthing/libauth"
-	"github.com/z4yx/GoAuthing/libtunet"
 )
 
 type Settings struct {
@@ -137,11 +136,11 @@ func requestPasswd() (err error) {
 
 func setLoggerLevel(debug bool, daemon bool) {
 	if daemon {
-		_ = loggo.ConfigureLoggers("auth-thu=ERROR;libtunet=ERROR;libauth=ERROR")
+		_ = loggo.ConfigureLoggers("auth-thu=ERROR;libauth=ERROR")
 	} else if debug {
-		_ = loggo.ConfigureLoggers("auth-thu=DEBUG;libtunet=DEBUG;libauth=DEBUG")
+		_ = loggo.ConfigureLoggers("auth-thu=DEBUG;libauth=DEBUG")
 	} else {
-		_ = loggo.ConfigureLoggers("auth-thu=INFO;libtunet=INFO;libauth=INFO")
+		_ = loggo.ConfigureLoggers("auth-thu=INFO;libauth=INFO")
 	}
 }
 
@@ -218,9 +217,9 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 				DialContext: func(ctx context.Context, _network, addr string) (net.Conn, error) {
 					logger.Debugf("DialContext %s (%s)\n", addr, network)
 					myDial := &net.Dialer{
-						Timeout:   6 * time.Second,
-						KeepAlive: 0,
-						FallbackDelay: -1,  // disable RFC 6555 Fast Fallback
+						Timeout:       6 * time.Second,
+						KeepAlive:     0,
+						FallbackDelay: -1, // disable RFC 6555 Fast Fallback
 					}
 					return myDial.DialContext(ctx, network, addr)
 				},
@@ -375,53 +374,6 @@ func cmdDeauth(c *cli.Context) {
 	}
 }
 
-func cmdLogin(c *cli.Context) error {
-	err := parseSettings(c)
-	if err != nil {
-	    logger.Errorf("Parse setting error: %s\n", err)
-	    os.Exit(1)
-	}
-	err = requestUser()
-	if err != nil {
-		logger.Errorf("Request user error: %s\n", err)
-		os.Exit(1)
-	}
-	err = requestPasswd()
-	if err != nil {
-		logger.Errorf("Request password error: %s\n", err)
-		os.Exit(1)
-	}
-	success, err := libtunet.LoginLogout(settings.Username, settings.Password, false)
-	if success {
-		logger.Infof("Login Successfully!\n")
-		runHook(c)
-		if settings.KeepOn {
-			return keepAliveLoop(c, false)
-		}
-	} else {
-		logger.Errorf("Login error: %s\n", err)
-		os.Exit(1)
-	}
-	return err
-}
-
-func cmdLogout(c *cli.Context) {
-	err := parseSettings(c)
-	if err != nil {
-		logger.Errorf("Parse setting error: %s\n", err)
-		os.Exit(1)
-	}
-	//err := requestUser()
-	success, err := libtunet.LoginLogout(settings.Username, settings.Password, true)
-	if success {
-		logger.Infof("Logout Successfully!\n")
-		runHook(c)
-	} else {
-		logger.Errorf("Logout Failed: %s\n", err)
-		os.Exit(1)
-	}
-}
-
 func cmdKeepalive(c *cli.Context) {
 	err := parseSettings(c)
 	if err != nil {
@@ -430,7 +382,7 @@ func cmdKeepalive(c *cli.Context) {
 	}
 	err = keepAliveLoop(c, c.Bool("auth"))
 	if err != nil {
-	    logger.Errorf("Keepalive error: %s\n", err)
+		logger.Errorf("Keepalive error: %s\n", err)
 		os.Exit(1)
 	}
 }
@@ -487,19 +439,6 @@ func main() {
 				Action: cmdDeauth,
 			},
 
-			cli.Command{
-				Name:  "login",
-				Usage: "Login via net.tsinghua",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
-				},
-				Action: cmdLogin,
-			},
-			cli.Command{
-				Name:   "logout",
-				Usage:  "Logout via net.tsinghua",
-				Action: cmdLogout,
-			},
 			cli.Command{
 				Name:  "online",
 				Usage: "Keep your computer online",

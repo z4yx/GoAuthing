@@ -57,8 +57,6 @@ COMMANDS:
          --host value    use customized hostname of srun4000
          --insecure      use http instead of https
          --ac-id value   use specified ac_id
-     login   Login via net.tsinghua
-     logout  Logout via net.tsinghua
      online  Keep your computer online
        OPTIONS:
          --auth, -a  keep the Auth online only
