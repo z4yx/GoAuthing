@@ -22,12 +22,10 @@ USAGE:
    auth-thu [options]
    auth-thu [options] auth [auth_options]
    auth-thu [options] deauth [auth_options]
-   auth-thu [options] login
-   auth-thu [options] logout
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.2.1
+   2.3
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
