@@ -286,13 +286,10 @@ func authUtil(c *cli.Context, logout bool) error {
 	if len(settings.Ip) == 0 && len(settings.AcID) == 0 {
 		// Probe the ac_id parameter
 		// We do this only in Tsinghua, since it requires access to usereg.t.e.c/net.t.e.c
-		// For v6, ac_id must be probed using different url
 		retAcID, err := libauth.GetAcID(settings.V6)
-		// FIXME: currently when logout, the GetAcID is actually broken.
-		// Though logout does not require correct ac_id now, it can break.
-		if err != nil && !logout {
+		if err != nil || retAcID == "1" {
 			logger.Debugf("Failed to get ac_id: %v", err)
-			logger.Debugf("Login may fail with 'IP地址异常'.")
+			logger.Debugf("Login may fail with '找不到符合条件的控制策略'.")
 		}
 		acID = retAcID
 	}
