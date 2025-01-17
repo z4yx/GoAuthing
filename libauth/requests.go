@@ -109,34 +109,56 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 }
 
 func IsOnline(host *UrlProvider, acID string) (online bool, err error, username string) {
+	logger.Debugf("Check if online\n")
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
-			if strings.Index(req.URL.Path, "succeed_wired.php") != -1 {
-				online = true
-				regexUsername := regexp.MustCompile(`username=([-a-zA-Z0-9]+)`)
-				matches := regexUsername.FindStringSubmatch(req.URL.RawQuery)
-				if len(matches) > 0 {
-					username = matches[1]
-					logger.Debugf("Extracted username: \"%s\"\n", username)
-				}
-
-			}
-			return nil
-		},
 	}
 	online = false
 	params := url.Values{
 		"ac_id": []string{acID},
 	}
-	url := host.OnlineCheckUriBase() + "?" + params.Encode()
-	logger.Debugf("GET \"%s\"\n", url)
-	resp, err := netClient.Get(url)
+	uri := host.OnlineCheckUriBase() + "?" + params.Encode()
+	logger.Debugf("GET \"%s\"\n", uri)
+	resp, err := netClient.Get(uri)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
+
+	// find public ip from response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	regexMatchIP := regexp.MustCompile(`ip\s+:\s"([0-9.]+)"`)
+	matches := regexMatchIP.FindStringSubmatch(string(body))
+	if len(matches) < 2 {
+		err = errors.New("ip not found")
+		return
+	}
+	ip := matches[1]
+	logger.Debugf("ip=%s\n", ip)
+
+	// Get user info
+	logger.Debugf("Get user info\n")
+	params = url.Values{
+		"ip":           []string{ip},
+	}
+	info, err := GetJSON(host.UserInfoUriBase(), params)
+
+	var infoResp map[string]interface{}
+	err = json.Unmarshal([]byte(info), &infoResp)
+	logger.Debugf("Get user info %v\n", infoResp)
+	if err != nil {
+		return
+	}
+
+	res, valid := infoResp["error"].(string)
+	if valid && res == "ok" {
+		online = true
+		logger.Debugf("User is online\n")
+		return
+	}
 
 	return
 }
@@ -206,6 +228,7 @@ func GetNasID(IP, user, password string) (nasID string, err error) {
 }
 
 func GetAcID(V6 bool) (acID string, err error) {
+	logger.Debugf("Get AC ID\n")
 	var netClient = &http.Client{
 		Timeout: time.Second * 2,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -216,7 +239,7 @@ func GetAcID(V6 bool) (acID string, err error) {
 	acID = ""
 	var resp *http.Response
 	var body []byte
-	url := "http://net.tsinghua.edu.cn/"
+	url := "http://login.tsinghua.edu.cn/login_1.html"
 	if V6 {
 		url = "http://mirrors6.tuna.tsinghua.edu.cn/"
 	}
@@ -230,7 +253,7 @@ func GetAcID(V6 bool) (acID string, err error) {
 	if err != nil {
 		return
 	}
-	regexMatchAcID := regexp.MustCompile(`/index_([0-9]+)\.html`)
+	regexMatchAcID := regexp.MustCompile(`\?ac_id=([0-9]+)`)
 	matches := regexMatchAcID.FindStringSubmatch(string(body))
 	if len(matches) < 2 {
 		err = errors.New("ac_id not found")

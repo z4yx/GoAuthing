@@ -20,9 +20,13 @@ func (u *UrlProvider) LoginUriBase() string {
 }
 
 func (u *UrlProvider) OnlineCheckUriBase() string {
-	return u.protocol + u.host + "/srun_portal_pc.php"
+	return u.protocol + u.host + "/srun_portal_pc"
 }
 
 func (u *UrlProvider) ChallengeUriBase() string {
 	return u.protocol + u.host + "/cgi-bin/get_challenge"
+}
+
+func (u *UrlProvider) UserInfoUriBase() string {
+	return u.protocol + u.host + "/cgi-bin/rad_user_info"
 }
