@@ -244,7 +244,7 @@ func GetAcID(V6 bool) (acID string, err error) {
 	acID = ""
 	var resp *http.Response
 	var body []byte
-	url := "http://login.tsinghua.edu.cn/login_1.html"
+	url := "http://login.tsinghua.edu.cn/index_1.html"
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err = netClient.Get(url)
 	if err != nil {
