@@ -157,7 +157,12 @@ func IsOnline(host *UrlProvider, acID string) (online bool, err error, username 
 	if valid && res == "ok" {
 		online = true
 		logger.Debugf("User is online\n")
-		return
+	}
+
+	res, valid = infoResp["user_name"].(string)
+	if valid {
+		username = res
+		logger.Debugf("User name is \"%s\"\n", username)
 	}
 
 	return
