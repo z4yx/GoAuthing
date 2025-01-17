@@ -277,9 +277,9 @@ func authUtil(c *cli.Context, logout bool) error {
 	domain := settings.Host
 	if len(settings.Host) == 0 {
 		if settings.V6 {
-			domain = "auth6.tsinghua.edu.cn"
+			domain = "tauth6.tsinghua.edu.cn"
 		} else {
-			domain = "auth4.tsinghua.edu.cn"
+			domain = "tauth4.tsinghua.edu.cn"
 		}
 	}
 
