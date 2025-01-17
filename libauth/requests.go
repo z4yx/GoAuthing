@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/juju/loggo"
@@ -169,66 +167,7 @@ func IsOnline(host *UrlProvider, acID string) (online bool, err error, username 
 }
 
 func GetNasID(IP, user, password string) (nasID string, err error) {
-	var netClient = &http.Client{
-		Timeout: time.Second * 2,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
-			return errors.New("should not redirect")
-		},
-	}
-	nasID = ""
-	var req *http.Request
-	var resp *http.Response
-	var body []byte
-	data := url.Values{
-		"action":          {"login"},
-		"user_login_name": {user},
-		"user_password":   {fmt.Sprintf("%032x", md5.Sum([]byte(password)))},
-	}
-	api := "http://usereg.tsinghua.edu.cn/do.php"
-	logger.Debugf("POST \"%s\" %v\n", api, data)
-	resp, err = netClient.PostForm(api, data)
-	if err != nil {
-		return
-	}
-	cookies := resp.Cookies()
-	defer resp.Body.Close()
-
-	data = url.Values{
-		"actionType": {"searchNasId"},
-		"ip":         {IP},
-	}
-	api = "http://usereg.tsinghua.edu.cn/ip_login_import.php"
-	encodedData := data.Encode()
-	logger.Debugf("POST \"%s\" %v\n", api, encodedData)
-	req, err = http.NewRequest("POST", api, strings.NewReader(encodedData))
-	if err != nil {
-		return
-	}
-	for _, c := range cookies {
-		req.AddCookie(c)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err = netClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	str := string(body)
-	if str == "fail" {
-		err = errors.New("ip_login_import.php responds with 'fail'")
-		return
-	}
-	if _, err1 := strconv.Atoi(str); err1 != nil {
-		err = errors.New("NAS ID should be a number")
-		return
-	}
-	nasID = str
-	logger.Debugf("nasID=%s\n", nasID)
+	err = errors.New("Not implemented for usereg 2025")
 	return
 }
 
