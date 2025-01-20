@@ -194,13 +194,13 @@ func GetAcID(V6 bool) (acID string, err error) {
 	if err != nil {
 		return
 	}
-	regexMatchAcID := regexp.MustCompile(`\?ac_id=([0-9]+)`)
+	regexMatchAcID := regexp.MustCompile(`(ac_id=|index_)([0-9]+)`)
 	matches := regexMatchAcID.FindStringSubmatch(string(body))
-	if len(matches) < 2 {
+	if len(matches) < 3 {
 		err = errors.New("ac_id not found")
 		return
 	}
-	acID = matches[1]
+	acID = matches[2]
 	logger.Debugf("ac_id=%s\n", acID)
 	return
 }
