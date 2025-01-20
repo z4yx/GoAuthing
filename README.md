@@ -25,7 +25,7 @@ USAGE:
    auth-thu [options] online [online_options]
 
 VERSION:
-   2.3.3
+   2.3.4
 
 AUTHORS:
    Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>
