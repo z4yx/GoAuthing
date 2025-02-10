@@ -398,7 +398,7 @@ func cmdKeepalive(c *cli.Context) {
 		logger.Errorf("Parse setting error: %s\n", err)
 		os.Exit(1)
 	}
-	err = keepAliveLoop(c, c.Bool("auth"))
+	err = keepAliveLoop(c, c.Bool("campus-only"))
 	if err != nil {
 		logger.Errorf("Keepalive error: %s\n", err)
 		os.Exit(1)
@@ -463,7 +463,7 @@ func main() {
 				Name:  "online",
 				Usage: "Keep your computer online",
 				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "auth, a", Usage: "keep the Auth online only"},
+					&cli.BoolFlag{Name: "campus-only, C, auth, a", Usage: "keep alive by requesting in-campus site instead of Internet site"},
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "keep only ipv6 connection online"},
 					&cli.IntFlag{Name: "retry, r", Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error", Value: 2},
 				},
