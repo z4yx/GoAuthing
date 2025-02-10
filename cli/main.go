@@ -29,6 +29,8 @@ type Settings struct {
 	HookSucc string `json:"hook-success"`
 	NoCheck  bool   `json:"noCheck"`
 	KeepOn   bool   `json:"keepOnline"`
+	OnIntrvl int    `json:"onlineInterval"`
+	OnRetry  int    `json:"onlineRetry"`
 	V6       bool   `json:"useV6"`
 	Insecure bool   `json:"insecure"`
 	Daemon   bool   `json:"daemonize"`
@@ -80,6 +82,15 @@ func mergeCliSettings(c *cli.Context) {
 	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
 	merged.V6 = settings.V6 || c.Bool("ipv6")
 	merged.KeepOn = settings.KeepOn || c.Bool("keep-online")
+	merged.OnIntrvl = c.GlobalInt("online-interval")
+	if !c.GlobalIsSet("online-interval") && settings.OnIntrvl != 0 {
+		// if no cmd arg but has settings item, settings precedes.
+		merged.OnIntrvl = settings.OnIntrvl
+	}
+	merged.OnRetry = c.Int("r") // online-retry
+	if !c.IsSet("r") && settings.OnRetry != 0 {
+		merged.OnRetry = settings.OnRetry
+	}
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
 	merged.Daemon = settings.Daemon || c.GlobalBool("daemonize")
 	merged.Debug = settings.Debug || c.GlobalBool("debug")
@@ -96,6 +107,8 @@ func mergeCliSettings(c *cli.Context) {
 	logger.Debugf("Settings NoCheck: %t\n", settings.NoCheck)
 	logger.Debugf("Settings V6: %t\n", settings.V6)
 	logger.Debugf("Settings KeepOn: %t\n", settings.KeepOn)
+	logger.Debugf("Settings OnIntrvl: %v\n", settings.OnIntrvl)
+	logger.Debugf("Settings OnRetry: %v\n", settings.OnRetry)
 	logger.Debugf("Settings Insecure: %t\n", settings.Insecure)
 	logger.Debugf("Settings Daemon: %t\n", settings.Daemon)
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
@@ -250,17 +263,25 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 		}
 	}()
 
+	errorCount := 0
 	for {
 		target := targetOutside
 		if campusOnly || settings.V6 {
 			target = targetInside
 		}
 		if ret = accessTarget(target, settings.V6); ret != nil {
-			ret = fmt.Errorf("accessing %s failed (re-login might be required): %w", target, ret)
-			break
+			errorCount++
+			if errorCount >= settings.OnRetry {
+				ret = fmt.Errorf("keepAlive request error (re-login might be required): %w\n", ret)
+				break
+			} else {
+				logger.Infof("keepAlive request error (will retry): %s\n", ret)
+			}
+		} else {
+			errorCount = 0
 		}
-		// Consumes ~5MB per day
-		time.Sleep(3 * time.Second)
+		// Consumes ~5MB per day when settings.OnIntrvl == 3
+		time.Sleep(time.Duration(settings.OnIntrvl) * time.Second)
 	}
 	return
 }
@@ -401,6 +422,7 @@ func main() {
 			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
 			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
+			&cli.IntFlag{Name: "online-interval, I", Usage: "the interval between each keepAlive request (s)", Value: 3},
 			&cli.BoolFlag{Name: "daemonize, D", Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
@@ -418,6 +440,7 @@ func main() {
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
+					&cli.IntFlag{Name: "keep-online-retry, r", Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error. Only available when --keep-online set", Value: 2},
 					&cli.StringFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdAuth,
@@ -442,6 +465,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "auth, a", Usage: "keep the Auth online only"},
 					&cli.BoolFlag{Name: "ipv6, 6", Usage: "keep only ipv6 connection online"},
+					&cli.IntFlag{Name: "retry, r", Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error", Value: 2},
 				},
 				Action: cmdKeepalive,
 			},
