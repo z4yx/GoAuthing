@@ -303,7 +303,7 @@ func authUtil(c *cli.Context, logout bool) error {
 		if online && !logout {
 			logger.Infof("Currently online!")
 			if settings.KeepOn {
-				return keepAliveLoop(c, true)
+				return keepAliveLoop(c, settings.Campus)
 			}
 			return nil
 		} else if !online && logout {
@@ -345,7 +345,7 @@ func authUtil(c *cli.Context, logout bool) error {
 			if len(settings.Ip) != 0 {
 				logger.Errorf("Cannot keep another IP online\n")
 			} else {
-				return keepAliveLoop(c, true)
+				return keepAliveLoop(c, settings.Campus)
 			}
 		}
 	} else {
