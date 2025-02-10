@@ -5,7 +5,7 @@ StartLimitIntervalSec=0
 [Service]
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D deauth
 ExecStartPre=-/usr/local/bin/auth-thu -c /etc/goauthing.json -D auth
-ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json -D online
+ExecStart=/usr/local/bin/auth-thu -c /etc/goauthing.json online
 User=nobody
 Restart=always
 RestartSec=5
