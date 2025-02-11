@@ -140,7 +140,7 @@ func IsOnline(host *UrlProvider, acID string) (online bool, err error, username 
 	// Get user info
 	logger.Debugf("Get user info\n")
 	params = url.Values{
-		"ip":           []string{ip},
+		"ip": []string{ip},
 	}
 	info, err := GetJSON(host.UserInfoUriBase(), params)
 
@@ -184,6 +184,9 @@ func GetAcID(V6 bool) (acID string, err error) {
 	var resp *http.Response
 	var body []byte
 	url := "http://login.tsinghua.edu.cn/index_1.html"
+	if V6 {
+		url = "http://mirrors6.tuna.tsinghua.edu.cn/"
+	}
 	logger.Debugf("GET \"%s\"\n", url)
 	resp, err = netClient.Get(url)
 	if err != nil {
