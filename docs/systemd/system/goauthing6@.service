@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 # default config is in ~/.auth-thu
 ExecStartPre=-/usr/local/bin/auth-thu -D deauth -6
 ExecStartPre=-/usr/local/bin/auth-thu -D auth -6
-ExecStart=/usr/local/bin/auth-thu -D online -6
+ExecStart=/usr/local/bin/auth-thu online -6
 User=%i
 Restart=always
 RestartSec=5
