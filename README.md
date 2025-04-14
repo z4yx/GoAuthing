@@ -115,6 +115,7 @@ For OpenWRT users, there are two options available: `goauthing` loading the conf
 
 ```shell
 touch /etc/config/goauthing
+uci set goauthing.config=goauthing
 uci set goauthing.config.username='<YOUR-TUNET-ACCOUNT-NAME>'
 uci set goauthing.config.password='<YOUR-TUNET-PASSWORD>'
 uci commit goauthing
