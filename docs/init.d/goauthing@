@@ -43,10 +43,10 @@ logout() {
 
 start_service() {
   config_load "$SERV"
-  config_foreach start_instance "$SERV"
+  start_instance
 }
 
 stop_service() {
   config_load "$SERV"
-  config_foreach logout "$SERV"
+  logout
 }
