@@ -11,8 +11,7 @@ generate_command() {
 CMD="\
 \"$PROG\" -c \"$CONF\" -D deauth; \
 \"$PROG\" -c \"$CONF\" -D auth; \
-\"$PROG\" -c \"$CONF\" -D login; \
-\"$PROG\" -c \"$CONF\" -D online; \
+\"$PROG\" -c \"$CONF\" online; \
 "
 }
 
@@ -27,5 +26,5 @@ start_service() {
 }
 
 stop_service() {
-	"$PROG" -c "$CONF" -D logout
+	"$PROG" -c "$CONF" -D deauth
 }

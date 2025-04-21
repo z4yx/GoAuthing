@@ -11,7 +11,6 @@ generate_command() {
 CMD="\
 \"$PROG\" $1 deauth; \
 \"$PROG\" $1 auth; \
-\"$PROG\" $1 login; \
 \"$PROG\" $1 online; \
 "
 }
@@ -32,21 +31,11 @@ start_instance() {
   procd_close_instance
 }
 
-logout() {
-  local username password
-  config_get username config username
-  config_get password config password
-  local args="-u $username -p $password"
-
-  "$PROG" $args logout
-}
-
 start_service() {
   config_load "$SERV"
   start_instance
 }
 
 stop_service() {
-  config_load "$SERV"
-  logout
+  "$PROG" deauth
 }

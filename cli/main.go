@@ -411,8 +411,6 @@ func main() {
 		UsageText: `auth-thu [options]
 	 auth-thu [options] auth [auth_options]
 	 auth-thu [options] deauth [auth_options]
-	 auth-thu [options] login
-	 auth-thu [options] logout
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
 		Version:  "2.3.5",
@@ -470,7 +468,14 @@ func main() {
 				Action: cmdKeepalive,
 			},
 		},
-		Action: cmdAuth,
+		Action: func(c *cli.Context) {
+			if len(c.Args()) > 0 {
+				fmt.Printf("Command not found: %v\n\n", c.Args()[0])
+				cli.ShowAppHelpAndExit(c, 0)
+			} else { // when no command, default to auth
+				cmdAuth(c)
+			}
+		},
 		Authors: []cli.Author{
 			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
 			{Name: "Nogeek", Email: "ritou11@gmail.com"},
