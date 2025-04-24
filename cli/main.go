@@ -16,7 +16,7 @@ import (
 
 	"github.com/howeyc/gopass"
 	"github.com/juju/loggo"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/urfave/cli/v3"
 
 	"github.com/z4yx/GoAuthing/libauth"
 )
@@ -57,13 +57,13 @@ func parseSettingsFile(path string) error {
 	return nil
 }
 
-func mergeCliSettings(c *cli.Context) {
+func mergeCliSettings(c *cli.Command) {
 	var merged Settings
-	merged.Username = c.GlobalString("username")
+	merged.Username = c.String("username")
 	if len(merged.Username) == 0 {
 		merged.Username = settings.Username
 	}
-	merged.Password = c.GlobalString("password")
+	merged.Password = c.String("password")
 	if len(merged.Password) == 0 {
 		merged.Password = settings.Password
 	}
@@ -75,15 +75,15 @@ func mergeCliSettings(c *cli.Context) {
 	if len(merged.Host) == 0 {
 		merged.Host = settings.Host
 	}
-	merged.HookSucc = c.GlobalString("hook-success")
+	merged.HookSucc = c.String("hook-success")
 	if len(merged.HookSucc) == 0 {
 		merged.HookSucc = settings.HookSucc
 	}
 	merged.NoCheck = settings.NoCheck || c.Bool("no-check")
 	merged.V6 = settings.V6 || c.Bool("ipv6")
 	merged.KeepOn = settings.KeepOn || c.Bool("keep-online")
-	merged.OnIntrvl = c.GlobalInt("online-interval")
-	if !c.GlobalIsSet("online-interval") && settings.OnIntrvl != 0 {
+	merged.OnIntrvl = c.Int("online-interval")
+	if !c.IsSet("online-interval") && settings.OnIntrvl != 0 {
 		// if no cmd arg but has settings item, settings precedes.
 		merged.OnIntrvl = settings.OnIntrvl
 	}
@@ -92,8 +92,8 @@ func mergeCliSettings(c *cli.Context) {
 		merged.OnRetry = settings.OnRetry
 	}
 	merged.Insecure = settings.Insecure || c.Bool("insecure")
-	merged.Daemon = settings.Daemon || c.GlobalBool("daemonize")
-	merged.Debug = settings.Debug || c.GlobalBool("debug")
+	merged.Daemon = settings.Daemon || c.Bool("daemonize")
+	merged.Debug = settings.Debug || c.Bool("debug")
 	merged.AcID = c.String("ac-id")
 	if len(merged.AcID) == 0 {
 		merged.AcID = settings.AcID
@@ -157,8 +157,8 @@ func setLoggerLevel(debug bool, daemon bool) {
 	}
 }
 
-func locateConfigFile(c *cli.Context) (cf string) {
-	cf = c.GlobalString("config-file")
+func locateConfigFile(c *cli.Command) (cf string) {
+	cf = c.String("config-file")
 	if len(cf) != 0 {
 		return
 	}
@@ -183,15 +183,15 @@ func locateConfigFile(c *cli.Context) (cf string) {
 	return ""
 }
 
-func parseSettings(c *cli.Context) (err error) {
+func parseSettings(c *cli.Command) (err error) {
 	if c.Bool("help") {
 		cli.ShowAppHelpAndExit(c, 0)
 	}
 	// Early debug flag setting (have debug messages when access config file)
-	setLoggerLevel(c.GlobalBool("debug"), c.GlobalBool("daemonize"))
+	setLoggerLevel(c.Bool("debug"), c.Bool("daemonize"))
 
 	cf := locateConfigFile(c)
-	if len(cf) == 0 && c.GlobalBool("daemonize") {
+	if len(cf) == 0 && c.Bool("daemonize") {
 		return fmt.Errorf("cannot find config file (it is necessary in daemon mode)")
 	}
 	if len(cf) != 0 {
@@ -206,7 +206,7 @@ func parseSettings(c *cli.Context) (err error) {
 	return
 }
 
-func runHook(c *cli.Context) {
+func runHook(c *cli.Command) {
 	if settings.HookSucc != "" {
 		logger.Debugf("Run hook \"%s\"\n", settings.HookSucc)
 		cmd := exec.Command(settings.HookSucc)
@@ -216,7 +216,7 @@ func runHook(c *cli.Context) {
 	}
 }
 
-func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
+func keepAliveLoop(c *cli.Command, campusOnly bool) (ret error) {
 	logger.Infof("Accessing websites periodically to keep you online")
 
 	accessTarget := func(url string, ipv6 bool) (ret error) {
@@ -286,7 +286,7 @@ func keepAliveLoop(c *cli.Context, campusOnly bool) (ret error) {
 	return
 }
 
-func authUtil(c *cli.Context, logout bool) error {
+func authUtil(c *cli.Command, logout bool) error {
 	err := parseSettings(c)
 	if err != nil {
 		return err
@@ -375,24 +375,26 @@ func authUtil(c *cli.Context, logout bool) error {
 	return err
 }
 
-func cmdAuth(c *cli.Context) {
+func cmdAuth(ctx context.Context, c *cli.Command) error {
 	logout := c.Bool("logout")
 	err := authUtil(c, logout)
 	if err != nil {
 		logger.Errorf("Auth error: %s", err)
 		os.Exit(1)
 	}
+	return nil
 }
 
-func cmdDeauth(c *cli.Context) {
+func cmdDeauth(ctx context.Context, c *cli.Command) error {
 	err := authUtil(c, true)
 	if err != nil {
 		logger.Errorf("Deauth error: %s\n", err)
 		os.Exit(1)
 	}
+	return nil
 }
 
-func cmdKeepalive(c *cli.Context) {
+func cmdKeepalive(ctx context.Context, c *cli.Command) error {
 	err := parseSettings(c)
 	if err != nil {
 		logger.Errorf("Parse setting error: %s\n", err)
@@ -403,10 +405,11 @@ func cmdKeepalive(c *cli.Context) {
 		logger.Errorf("Keepalive error: %s\n", err)
 		os.Exit(1)
 	}
+	return nil
 }
 
 func main() {
-	app := &cli.App{
+	cmd := &cli.Command{
 		Name: "auth-thu",
 		UsageText: `auth-thu [options]
 	 auth-thu [options] auth [auth_options]
@@ -416,75 +419,78 @@ func main() {
 		Version:  "2.3.5",
 		HideHelp: true,
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "username, u", Usage: "your TUNET account `name`"},
-			&cli.StringFlag{Name: "password, p", Usage: "your TUNET `password`"},
-			&cli.StringFlag{Name: "config-file, c", Usage: "`path` to your config file, default ~/.auth-thu"},
+			&cli.StringFlag{Name: "username", Aliases: []string{"u"}, Usage: "your TUNET account `name`"},
+			&cli.StringFlag{Name: "password", Aliases: []string{"p"}, Usage: "your TUNET `password`"},
+			&cli.StringFlag{Name: "config-file", Aliases: []string{"c"}, Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
-			&cli.IntFlag{Name: "online-interval, I", Usage: "the interval between each keepAlive request (s)", Value: 3},
-			&cli.BoolFlag{Name: "daemonize, D", Usage: "run without reading username/password from standard input; less log"},
+			&cli.IntFlag{Name: "online-interval", Aliases: []string{"I"}, Usage: "the interval between each keepAlive request (s)", Value: 3},
+			&cli.BoolFlag{Name: "daemonize", Aliases: []string{"D"}, Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
 		},
-		Commands: []cli.Command{
-			cli.Command{
+		Commands: []*cli.Command{
+			{
 				Name:  "auth",
 				Usage: "(default) Auth via auth4/6.tsinghua",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
-					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send login request"},
-					&cli.BoolFlag{Name: "logout, o", Usage: "de-auth of the online account (behaves the same as deauth command, for backward-compatibility)"},
-					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
-					&cli.BoolFlag{Name: "campus-only, C", Usage: "auth only, no auto-login (v4 only)"},
+					&cli.BoolFlag{Name: "no-check", Aliases: []string{"n"}, Usage: "skip online checking, always send login request"},
+					&cli.BoolFlag{Name: "logout", Aliases: []string{"o"}, Usage: "de-auth of the online account (behaves the same as deauth command, for backward-compatibility)"},
+					&cli.BoolFlag{Name: "ipv6", Aliases: []string{"6"}, Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+					&cli.BoolFlag{Name: "campus-only", Aliases: []string{"C"}, Usage: "auth only, no auto-login (v4 only)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
-					&cli.BoolFlag{Name: "keep-online, k", Usage: "keep online after login"},
-					&cli.IntFlag{Name: "keep-online-retry, r", Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error. Only available when --keep-online set", Value: 2},
+					&cli.BoolFlag{Name: "keep-online", Aliases: []string{"k"}, Usage: "keep online after login"},
+					&cli.IntFlag{Name: "keep-online-retry", Aliases: []string{"r"}, Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error. Only available when --keep-online set", Value: 2},
 					&cli.StringFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdAuth,
 			},
-			cli.Command{
+			{
 				Name:  "deauth",
 				Usage: "De-auth via auth4/6.tsinghua",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "ip", Usage: "authenticating for specified IP address"},
-					&cli.BoolFlag{Name: "no-check, n", Usage: "skip online checking, always send logout request"},
-					&cli.BoolFlag{Name: "ipv6, 6", Usage: "authenticating for IPv6 (auth6.tsinghua)"},
+					&cli.BoolFlag{Name: "no-check", Aliases: []string{"n"}, Usage: "skip online checking, always send logout request"},
+					&cli.BoolFlag{Name: "ipv6", Aliases: []string{"6"}, Usage: "authenticating for IPv6 (auth6.tsinghua)"},
 					&cli.StringFlag{Name: "host", Usage: "use customized hostname of srun4000"},
 					&cli.BoolFlag{Name: "insecure", Usage: "use http instead of https"},
 					&cli.StringFlag{Name: "ac-id", Usage: "use specified ac_id"},
 				},
 				Action: cmdDeauth,
 			},
-
-			cli.Command{
+			{
 				Name:  "online",
 				Usage: "Keep your computer online",
 				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "campus-only, C, auth, a", Usage: "keep alive by requesting in-campus site instead of Internet site"},
-					&cli.BoolFlag{Name: "ipv6, 6", Usage: "keep only ipv6 connection online"},
-					&cli.IntFlag{Name: "retry, r", Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error", Value: 2},
+					&cli.BoolFlag{Name: "campus-only", Aliases: []string{"C", "auth", "a"}, Usage: "keep alive by requesting in-campus site instead of Internet site"},
+					&cli.BoolFlag{Name: "ipv6", Aliases: []string{"6"}, Usage: "keep only ipv6 connection online"},
+					&cli.IntFlag{Name: "retry", Aliases: []string{"r"}, Usage: "the repeat times of failed keepAlive requests before keepAliveLoop exits with error", Value: 2},
 				},
 				Action: cmdKeepalive,
 			},
 		},
-		Action: func(c *cli.Context) {
-			if len(c.Args()) > 0 {
-				fmt.Printf("Command not found: %v\n\n", c.Args()[0])
+		Action: func(ctx context.Context, c *cli.Command) error {
+			if c.NArg() > 0 {
+				fmt.Printf("Command not found: %v\n\n", c.Args().Get(0))
 				cli.ShowAppHelpAndExit(c, 0)
 			} else { // when no command, default to auth
-				cmdAuth(c)
+				cmdAuth(ctx, c)
 			}
+			return nil
 		},
-		Authors: []cli.Author{
-			{Name: "Yuxiang Zhang", Email: "yuxiang.zhang@tuna.tsinghua.edu.cn"},
-			{Name: "Nogeek", Email: "ritou11@gmail.com"},
-			{Name: "ZenithalHourlyRate", Email: "i@zenithal.me"},
-			{Name: "Jiajie Chen", Email: "c@jia.je"},
-			{Name: "KomeijiOcean", Email: "oceans2000@126.com"},
-			{Name: "Sharzy L", Email: "me@sharzy.in"},
+		Authors: []any{
+			"Yuxiang Zhang <yuxiang.zhang@tuna.tsinghua.edu.cn>",
+			"Nogeek <ritou11@gmail.com>",
+			"ZenithalHourlyRate <i@zenithal.me>",
+			"Jiajie Chen <c@jia.je>",
+			"KomeijiOcean <oceans2000@126.com>",
+			"Sharzy L <me@sharzy.in>",
 		},
 	}
 
-	_ = app.Run(os.Args)
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		logger.Errorf("Got error: %s", err)
+		os.Exit(1)
+	}
 }
