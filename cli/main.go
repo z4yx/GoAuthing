@@ -433,7 +433,7 @@ func main() {
 			&cli.StringFlag{Name: "config-file", Aliases: []string{"c"}, Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
 			&cli.IntFlag{Name: "online-interval", Aliases: []string{"I"}, Usage: "the interval between each keepAlive request (s)", Value: 3},
-			&cli.IntFlag{Name: "timeout", Aliases: []string{"t"}, Usage: "HTTP request timeout in seconds for the auth server", Value: 30},
+			&cli.IntFlag{Name: "timeout", Aliases: []string{"t"}, Usage: "HTTP request timeout in seconds for the auth server", Value: 2},
 			&cli.BoolFlag{Name: "daemonize", Aliases: []string{"D"}, Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
