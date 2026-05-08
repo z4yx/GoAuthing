@@ -416,7 +416,7 @@ func main() {
 	 auth-thu [options] deauth [auth_options]
 	 auth-thu [options] online [online_options]`,
 		Usage:    "Authenticating utility for Tsinghua",
-		Version:  "2.3.5",
+		Version:  "2.4.0",
 		HideHelp: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "username", Aliases: []string{"u"}, Usage: "your TUNET account `name`"},
