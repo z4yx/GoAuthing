@@ -18,7 +18,7 @@ var logger = loggo.GetLogger("libauth")
 
 // HttpTimeout is the timeout used for all HTTP requests issued by libauth.
 // It can be overridden by the caller (e.g. the CLI) before making requests.
-var HttpTimeout = 30 * time.Second
+var HttpTimeout = 2 * time.Second
 
 func extractJSONFromJSONP(jsonp, callbackName string) (string, error) {
 	l := len(callbackName)
