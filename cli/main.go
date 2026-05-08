@@ -37,6 +37,7 @@ type Settings struct {
 	Debug    bool   `json:"debug"`
 	AcID     string `json:"acId"`
 	Campus   bool   `json:"campusOnly"`
+	Timeout  int    `json:"timeout"`
 }
 
 var logger = loggo.GetLogger("auth-thu")
@@ -99,7 +100,14 @@ func mergeCliSettings(c *cli.Command) {
 		merged.AcID = settings.AcID
 	}
 	merged.Campus = settings.Campus || c.Bool("campus-only")
+	merged.Timeout = c.Int("timeout")
+	if !c.IsSet("timeout") && settings.Timeout != 0 {
+		merged.Timeout = settings.Timeout
+	}
 	settings = merged
+	if settings.Timeout > 0 {
+		libauth.HttpTimeout = time.Duration(settings.Timeout) * time.Second
+	}
 	logger.Debugf("Settings Username: \"%s\"\n", settings.Username)
 	logger.Debugf("Settings Ip: \"%s\"\n", settings.Ip)
 	logger.Debugf("Settings Host: \"%s\"\n", settings.Host)
@@ -114,6 +122,7 @@ func mergeCliSettings(c *cli.Command) {
 	logger.Debugf("Settings Debug: %t\n", settings.Debug)
 	logger.Debugf("Settings AcID: \"%s\"\n", settings.AcID)
 	logger.Debugf("Settings Campus: %t\n", settings.Campus)
+	logger.Debugf("Settings Timeout: %d\n", settings.Timeout)
 }
 
 func requestUser() (err error) {
@@ -424,6 +433,7 @@ func main() {
 			&cli.StringFlag{Name: "config-file", Aliases: []string{"c"}, Usage: "`path` to your config file, default ~/.auth-thu"},
 			&cli.StringFlag{Name: "hook-success", Usage: "command line to be executed in shell after successful login/out"},
 			&cli.IntFlag{Name: "online-interval", Aliases: []string{"I"}, Usage: "the interval between each keepAlive request (s)", Value: 3},
+			&cli.IntFlag{Name: "timeout", Aliases: []string{"t"}, Usage: "HTTP request timeout in seconds for the auth server", Value: 30},
 			&cli.BoolFlag{Name: "daemonize", Aliases: []string{"D"}, Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
 			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},

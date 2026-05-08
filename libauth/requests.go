@@ -16,6 +16,10 @@ import (
 
 var logger = loggo.GetLogger("libauth")
 
+// HttpTimeout is the timeout used for all HTTP requests issued by libauth.
+// It can be overridden by the caller (e.g. the CLI) before making requests.
+var HttpTimeout = 30 * time.Second
+
 func extractJSONFromJSONP(jsonp, callbackName string) (string, error) {
 	l := len(callbackName)
 	if len(jsonp) < l+2 {
@@ -90,7 +94,7 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 	const CB = "C_a_l_l_b_a_c_k"
 	params.Set("callback", CB)
 	var netClient = &http.Client{
-		Timeout: time.Second * 2,
+		Timeout: HttpTimeout,
 	}
 	url := baseUrl + "?" + params.Encode()
 	logger.Debugf("GET \"%s\"\n", url)
@@ -109,7 +113,7 @@ func GetJSON(baseUrl string, params url.Values) (string, error) {
 func IsOnline(host *UrlProvider, acID string) (online bool, err error, username string) {
 	logger.Debugf("Check if online\n")
 	var netClient = &http.Client{
-		Timeout: time.Second * 2,
+		Timeout: HttpTimeout,
 	}
 	online = false
 	params := url.Values{
@@ -174,7 +178,7 @@ func GetNasID(IP, user, password string) (nasID string, err error) {
 func GetAcID(V6 bool) (acID string, err error) {
 	logger.Debugf("Get AC ID\n")
 	var netClient = &http.Client{
-		Timeout: time.Second * 2,
+		Timeout: HttpTimeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			logger.Debugf("REDIRECT \"%v\"\n", req.URL)
 			return errors.New("should not redirect")
