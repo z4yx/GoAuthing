@@ -1,6 +1,20 @@
 package libauth
 
-var PortalError = map[string]string{
+import "fmt"
+
+type PortalError struct {
+	Code    string
+	Message string
+}
+
+func (e *PortalError) Error() string {
+	if e.Code != "" {
+		return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	}
+	return e.Message
+}
+
+var portalErrorMessages = map[string]string{
 	"E3001": "流量或时长已用尽",
 	"E3002": "计费策略条件不匹配",
 	"E3003": "控制策略条件不匹配",
