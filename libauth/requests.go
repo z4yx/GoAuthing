@@ -261,10 +261,10 @@ func LoginLogout(username, password string, host *UrlProvider, logout bool, anot
 		err = nil
 	} else {
 		ecode, _ := loginResp["ecode"].(string)
-		if strerr, exist := PortalError[ecode]; exist {
-			err = errors.New(strerr)
+		if msg, exist := portalErrorMessages[ecode]; exist {
+			err = &PortalError{Code: ecode, Message: msg}
 		} else {
-			err = errors.New(res)
+			err = &PortalError{Code: ecode, Message: res}
 		}
 	}
 
