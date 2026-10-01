@@ -436,7 +436,7 @@ func main() {
 			&cli.IntFlag{Name: "timeout", Aliases: []string{"t"}, Usage: "HTTP request timeout in seconds for the auth server", Value: 2},
 			&cli.BoolFlag{Name: "daemonize", Aliases: []string{"D"}, Usage: "run without reading username/password from standard input; less log"},
 			&cli.BoolFlag{Name: "debug", Usage: "print debug messages"},
-			&cli.BoolFlag{Name: "help, h", Usage: "print the help"},
+			&cli.BoolFlag{Name: "help", Aliases: []string{"h"}, Usage: "print the help"},
 		},
 		Commands: []*cli.Command{
 			{
